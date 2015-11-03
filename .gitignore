@@ -1,0 +1,7 @@
+/lib/c/*.o
+/lib/c/*.so
+/lib/c/*.lo
+/lib/c/*.la
+priv/
+.libs/
+_build/
