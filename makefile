@@ -27,7 +27,8 @@ objfiles = $(addprefix $(buildroot)/, $(addsuffix .lo, $(basename $(srcfiles))))
 libname  = libexmagick
 libfile  = $(buildroot)/$(libname).la
 
-compile: $(libfile)
+build: $(libfile)
+compile: build
 
 clean:
 	$(bin_libtool) --mode=clean rm -f $(objfiles)
