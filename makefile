@@ -17,8 +17,9 @@ gm_cflags    	:= $(shell $(bin_gmconfig) --cflags --cppflags)
 gm_ldflags   	:= $(shell $(bin_gmconfig) --ldflags)
 erlang_flags 	:= $(shell $(bin_elixir) -e 'IO.puts (Path.join [:code.root_dir, ["erts-", :erlang.system_info(:version)], "include"])')
 
+exmagick_rpath  := $(shell $(CURDIR)/bin/rpath.sh $(gm_ldflags))
 exmagick_cflags  = -pedantic -ansi -I$(erlang_flags) $(gm_cflags)
-exmagick_ldflags = $(gm_ldflags) -rpath /lib -L/usr/local/lib
+exmagick_ldflags = $(gm_ldflags) -rpath $(exmagick_rpath) -L/usr/local/lib
 exmagick_ld_libs = $(gm_libs)
 
 srcfiles = $(wildcard lib/c/*.c)
