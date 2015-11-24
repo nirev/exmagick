@@ -12,7 +12,8 @@
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule ExMagick do
-
+  use ExMagick.Bang
+  
   @docmodule """
   NIF bindings to GraphicsImage library.
   """
@@ -20,30 +21,45 @@ defmodule ExMagick do
   @on_load {:load, 0}
   def load do
     sofile = Path.join([:code.priv_dir(:exmagick), "lib", "libexmagick"])
-    :ok = :erlang.load_nif(sofile, 0)
+    :erlang.load_nif(sofile, 0)
   end
 
   @doc """
-  Creates a new image structure with default values. At this point
-  there are no means to customize the params.
+  Join images into a single multi-image file [default: true].
   """
-  def image do
-    fail
-  end
+  @defbang {:flag, 3}
+  def flag(img, k = :adjoin, val), do: info_set_opt(img, k, val)
+
+  @doc """
+  The current value of the `adjoin` flag.
+  """
+  @defbang {:flag, 2}
+  def flag(img, k = :adjoin), do: info_get_opt(img, k)
+
+  @doc """
+  Creates a new image structure with default values. You may tune
+  image params using the `flag` function.
+  """
+  @defbang {:image, 0}
+  def image, do: fail
 
   @doc """
   Loads an image from a file.
   """
-  def image_load(_img, _path) do
-    fail
-  end
+  @defbang {:image_load, 2}
+  def image_load(_img, _path), do: fail
 
   @doc """
-  Saves a image to a file path.
+  Saves an image to one or multiple files. If the flag adjoin is false
+  multiple files will be created and the filename is expected to have
+  a printf-formatting sytle (ex.: foo%0d.png).
   """
-  def image_dump(_img, _path) do
-    fail
-  end
+  @defbang {:image_dump, 2}
+  def image_dump(_img, _path), do: fail
 
-  defp fail, do: raise "native method"
+  
+  defp info_set_opt(_img, _key, _val), do: fail
+  defp info_get_opt(_img, _key), do: fail
+  
+  defp fail, do: {:error, "native function"}
 end

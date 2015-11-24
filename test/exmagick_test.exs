@@ -19,14 +19,34 @@ defmodule ExMagickTest do
   setup_all do
     {:ok, [images: Path.expand("images/", __DIR__)]}
   end
-  
-  test "convert png image to png|jpg", context do
+
+  test "image_load(:png) and image_save(:jpg)", context do
     src = Path.join context[:images], "elixir.png"
     dst = Path.join context[:tmpdir], "elixir.jpg"
-    {:ok, image} = ExMagick.image
-    assert :ok == ExMagick.image_load image, src
-    assert :ok == ExMagick.image_dump image, dst
+    ExMagick.image!
+    |> ExMagick.image_load!(src)
+    |> ExMagick.image_dump!(dst)
     assert (File.exists? dst)
   end
-  
+
+  test "image_load(:pdf) and image_save(:jpg)", context do
+    src = Path.join context[:images], "elixir.pdf"
+    dst = Path.join context[:tmpdir], "elixir.jpg"
+    ExMagick.image!
+    |> ExMagick.image_load!(src)
+    |> ExMagick.image_dump!(dst)
+    assert (File.exists? dst)
+  end
+
+  test "image_load(:pdf) and image_save([:jpg])", context do
+    src = Path.join context[:images], "elixir.pdf"
+    dst = Path.join context[:tmpdir], "elixir%0d.jpg"
+    ExMagick.image!
+    |> ExMagick.image_load!(src)
+    |> ExMagick.flag!(:adjoin, false)
+    |> ExMagick.image_dump!(dst)
+    refute (File.exists? dst)
+    assert 10 == length(File.ls! context[:tmpdir])
+  end
+
 end
