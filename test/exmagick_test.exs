@@ -3,7 +3,8 @@ defmodule ExMagickTest do
 
   setup do
     tmpdir = Enum.reduce_while(0..100, nil, fn _, _ ->
-      path = Path.join System.tmp_dir!, (Float.to_string :random.uniform)
+      rand = :erlang.unique_integer([:positive])
+      path = Path.join System.tmp_dir!, "#{rand}"
       case (File.mkdir path) do
         :ok -> {:halt, path}
         _   -> {:cont, nil}
