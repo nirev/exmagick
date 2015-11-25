@@ -15,7 +15,21 @@ defmodule ExMagick do
   use ExMagick.Bang
   
   @docmodule """
-  NIF bindings to GraphicsImage library.
+
+  NIF bindings to GraphicsImage API. All functions returns an tuple in
+  the form `{:ok, image}` or `{:error, reason}` and for each function
+  there is the bang version of it.
+
+  Following a couple of examples. The first one transforms a PNG image
+  to JPEG. The second one queries a file about its type.
+  
+  iex> ExMagick.image!
+  ...> |> ExMagick.image_load(Path.join(__DIR__, "../test/images/elixir.png"))
+  ...> |> ExMagick.image_dump("/tmp/elixir.jpg")
+
+  iex> ExMagick.image!
+  ...> |> ExMagick.image_load(Path.join(__DIR__, "../test/images/elixir.png"))
+  ...> |> ExMagick.attr(:magick) # == PNG
   """
 
   @on_load {:load, 0}
@@ -41,9 +55,8 @@ defmodule ExMagick do
   end
 
   @doc """ 
-
-  Query image attrs. In addition to the flags defined in `flag/3` the
-  following is avaialble:
+  Query image attribute. In addition to the attrs defined in `attr/3`
+  the following is avaialble:
 
   * magick: Image encoding format (e.g. "GIF");
   """
@@ -51,12 +64,8 @@ defmodule ExMagick do
   def attr(img, k), do: get_attr(img, k)
 
   @doc """
-  Query an 
-  """
-
-  @doc """
   Creates a new image structure with default values. You may tune
-  image params using the `flag` function.
+  image params using the `attr` function.
   """
   @defbang {:image, 0}
   def image, do: fail
@@ -68,9 +77,9 @@ defmodule ExMagick do
   def image_load(_img, _path), do: fail
 
   @doc """
-  Saves an image to one or multiple files. If the flag adjoin is false
-  multiple files will be created and the filename is expected to have
-  a printf-formatting sytle (ex.: foo%0d.png).
+  Saves an image to one or multiple files. If the attr `adjoin` is
+  false multiple files will be created and the filename is expected to
+  have a printf-formatting sytle (ex.: foo%0d.png).
   """
   @defbang {:image_dump, 2}
   def image_dump(_img, _path), do: fail

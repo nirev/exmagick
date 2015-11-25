@@ -1,5 +1,21 @@
 defmodule ExMagick.Bang do
 
+  @docmodule """
+  Defines an  @defbang functions  that creates the  bang version  of a
+  function. The original function is expected to return `{:ok, value}`
+  on success. Example:
+
+  iex> defmodule Foobar do
+  ...>   use ExMagick.Bang
+  ...>
+  ...>   @defbang {foo, 0}
+  ...>   def foo, do: {:ok, "o.o"}
+  ...> end
+
+  `@defbang` can be used multiple times and can be anywhere in the
+  code.
+  """
+  
   defmacro __using__(_) do
     quote do
       Module.register_attribute __MODULE__, :defbang, accumulate: true, persist: false
