@@ -30,8 +30,8 @@ defmodule ExMagickTest do
   end
 
   test "default value of adjoin" do
-    value = ExMagick.image! |> ExMagick.flag!(:adjoin)
-    assert true == value
+    value = ExMagick.image! |> ExMagick.flag(:adjoin)
+    assert {:ok, true} == value
   end
 
   test "image_load(:pdf) and image_save(:jpg)", context do

@@ -25,13 +25,26 @@ defmodule ExMagick do
   end
 
   @doc """
-  Join images into a single multi-image file [default: true].
-  """
-  @defbang {:flag, 3}
-  def flag(img, k = :adjoin, val), do: info_set_opt(img, k, val)
+  Set/unset boolean flags. Currently the following flags are
+  available:
 
-  @doc """
-  The current value of the `adjoin` flag.
+  * adjoin [default: true]: unset to produce single image for each
+  frame [refer to
+  http://www.graphicsmagick.org/api/types.html#imageinfo for more
+  information].
+  """
+
+  @defbang {:flag, 3}
+  def flag(img, k, val) when is_atom(k) and is_boolean(val) do
+    case k do
+      :adjoin -> info_set_opt(img, k, val)
+      _       -> {:error, "unknown flag #{k}"}
+    end
+  end
+
+  @doc """ 
+  Query boolean flags. Refer to `flag/3` for information about
+  available flags.
   """
   @defbang {:flag, 2}
   def flag(img, k = :adjoin), do: info_get_opt(img, k)
