@@ -113,10 +113,14 @@ char *exmagick_utf8strcpy (char *dst, ErlNifBinary *utf8, size_t size)
 static
 ERL_NIF_TERM exmagick_make_utf8str (ErlNifEnv *env, const char *data)
 {
-  if (data == NULL)
-  { return(enif_make_string(env, "", ERL_NIF_LATIN1)); }
-  else
-  { return(enif_make_string(env, data, ERL_NIF_LATIN1)); }
+  ErlNifBinary utf8;
+  
+  size_t datalen = data == NULL ? 0 : strlen(data); /* TODO:strlen is wrong */
+  if (0 == enif_alloc_binary(datalen, &utf8))
+  { return(enif_raise_exception(env, enif_make_atom(env, "memory_error")));}
+
+  memcpy(utf8.data, data, datalen);
+  return(enif_make_binary(env, &utf8));
 }
 
 static
@@ -202,6 +206,8 @@ ERL_NIF_TERM exmagick_get_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
     else if (resource->i_info->adjoin == 1)
     { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_atom(env, "true"))); }
   }
+  else if (strcmp("magick", atom) == 0)
+  { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), exmagick_make_utf8str(env, resource->image->magick))); }
 
 ehandler:
   return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));

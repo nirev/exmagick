@@ -29,9 +29,20 @@ defmodule ExMagickTest do
     assert (File.exists? dst)
   end
 
-  test "default value of adjoin" do
+  test "adjoin attribute" do
     value = ExMagick.image! |> ExMagick.attr(:adjoin)
     assert {:ok, true} == value
+  end
+
+  test "magick attribute", context do
+    for {type, path} <- [ {"PDF", (Path.join context[:images], "elixir.pdf")},
+                          {"PNG", (Path.join context[:images], "elixir.png")}
+                        ] do
+      value = ExMagick.image!
+      |> ExMagick.image_load!(path)
+      |> ExMagick.attr!(:magick)
+      assert type == value
+    end
   end
 
   test "image_load(:pdf) and image_save(:jpg)", context do
