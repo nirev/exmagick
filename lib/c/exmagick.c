@@ -18,7 +18,7 @@
 #include <string.h>
 #include <langinfo.h>
 
-#define EXM_MAX_ATOM_SIZE 10
+#define EXM_MAX_ATOM_SIZE 255
 #define EXM_INIT char *errmsg = NULL
 #define EXM_FAIL(j, m) do { errmsg = m; goto j; } while (0)
 
