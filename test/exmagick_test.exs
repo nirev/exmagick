@@ -30,7 +30,7 @@ defmodule ExMagickTest do
   end
 
   test "default value of adjoin" do
-    value = ExMagick.image! |> ExMagick.flag(:adjoin)
+    value = ExMagick.image! |> ExMagick.attr(:adjoin)
     assert {:ok, true} == value
   end
 
@@ -48,7 +48,7 @@ defmodule ExMagickTest do
     dst = Path.join context[:tmpdir], "elixir%0d.jpg"
     ExMagick.image!
     |> ExMagick.image_load!(src)
-    |> ExMagick.flag!(:adjoin, false)
+    |> ExMagick.attr!(:adjoin, false)
     |> ExMagick.image_dump!(dst)
     refute (File.exists? dst)
     assert 10 == length(File.ls! context[:tmpdir])

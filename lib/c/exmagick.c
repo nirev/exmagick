@@ -40,16 +40,16 @@ static ERL_NIF_TERM exmagick_image (ErlNifEnv *env, int argc, const ERL_NIF_TERM
 static ERL_NIF_TERM exmagick_image_load (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_image_dump (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
-static ERL_NIF_TERM exmagick_info_set_opt(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-static ERL_NIF_TERM exmagick_info_get_opt(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_set_attr(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_get_attr(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
 ErlNifFunc exmagick_interface[] =
 {
   {"image", 0, exmagick_image},
   {"image_load", 2, exmagick_image_load},
   {"image_dump", 2, exmagick_image_dump},
-  {"info_set_opt", 3, exmagick_info_set_opt},
-  {"info_get_opt", 2, exmagick_info_get_opt}
+  {"set_attr", 3, exmagick_set_attr},
+  {"get_attr", 2, exmagick_get_attr}
 };
 
 ERL_NIF_INIT(Elixir.ExMagick, exmagick_interface, exmagick_load, NULL, NULL, exmagick_unload)
@@ -155,7 +155,7 @@ ehandler:
 }
 
 static
-ERL_NIF_TERM exmagick_info_set_opt (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+ERL_NIF_TERM exmagick_set_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
   char atom[EXM_MAX_ATOM_SIZE];
   exm_resource_t *resource;
@@ -181,7 +181,7 @@ ehandler:
   return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
 }
 
-ERL_NIF_TERM exmagick_info_get_opt (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+ERL_NIF_TERM exmagick_get_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
   char atom[EXM_MAX_ATOM_SIZE];
   exm_resource_t *resource;

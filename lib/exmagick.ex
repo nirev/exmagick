@@ -25,29 +25,34 @@ defmodule ExMagick do
   end
 
   @doc """
-  Set/unset boolean flags. Currently the following flags are
+  Change image attributes. Currently the following attributes are
   available:
 
   * adjoin [default: true]: unset to produce single image for each
-  frame [refer to
-  http://www.graphicsmagick.org/api/types.html#imageinfo for more
-  information].
+  frame;
   """
 
-  @defbang {:flag, 3}
-  def flag(img, k, val) when is_atom(k) and is_boolean(val) do
+  @defbang {:attr, 3}
+  def attr(img, k, v) when is_atom(k) do
     case k do
-      :adjoin -> info_set_opt(img, k, val)
-      _       -> {:error, "unknown flag #{k}"}
+      :adjoin when is_boolean(v) -> set_attr(img, k, v)
+      _                          -> {:error, "unknown attr #{k}/#{v}"}
     end
   end
 
   @doc """ 
-  Query boolean flags. Refer to `flag/3` for information about
-  available flags.
+
+  Query image attrs. In addition to the flags defined in `flag/3` the
+  following is avaialble:
+
+  * magick: Image encoding format (e.g. "GIF");
   """
-  @defbang {:flag, 2}
-  def flag(img, k = :adjoin), do: info_get_opt(img, k)
+  @defbang {:attr, 2}
+  def attr(img, k), do: get_attr(img, k)
+
+  @doc """
+  Query an 
+  """
 
   @doc """
   Creates a new image structure with default values. You may tune
@@ -70,9 +75,8 @@ defmodule ExMagick do
   @defbang {:image_dump, 2}
   def image_dump(_img, _path), do: fail
 
-  
-  defp info_set_opt(_img, _key, _val), do: fail
-  defp info_get_opt(_img, _key), do: fail
+  defp set_attr(_img, _key, _val), do: fail
+  defp get_attr(_img, _key), do: fail
   
   defp fail, do: {:error, "native function"}
 end
