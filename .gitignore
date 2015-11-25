@@ -5,3 +5,5 @@
 priv/
 .libs/
 _build/
+/deps/
+/doc/
