@@ -29,6 +29,11 @@ defmodule ExMagickTest do
     assert (File.exists? dst)
   end
 
+  test "default value of adjoin" do
+    value = ExMagick.image! |> ExMagick.flag!(:adjoin)
+    assert true == value
+  end
+
   test "image_load(:pdf) and image_save(:jpg)", context do
     src = Path.join context[:images], "elixir.pdf"
     dst = Path.join context[:tmpdir], "elixir.jpg"

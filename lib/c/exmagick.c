@@ -41,13 +41,15 @@ static ERL_NIF_TERM exmagick_image_load (ErlNifEnv *env, int argc, const ERL_NIF
 static ERL_NIF_TERM exmagick_image_dump (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
 static ERL_NIF_TERM exmagick_info_set_opt(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_info_get_opt(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
 ErlNifFunc exmagick_interface[] =
 {
   {"image", 0, exmagick_image},
   {"image_load", 2, exmagick_image_load},
   {"image_dump", 2, exmagick_image_dump},
-  {"info_set_opt", 3, exmagick_info_set_opt}
+  {"info_set_opt", 3, exmagick_info_set_opt},
+  {"info_get_opt", 2, exmagick_info_get_opt}
 };
 
 ERL_NIF_INIT(Elixir.ExMagick, exmagick_interface, exmagick_load, NULL, NULL, exmagick_unload)
@@ -112,7 +114,7 @@ static
 ERL_NIF_TERM exmagick_make_utf8str (ErlNifEnv *env, const char *data)
 {
   if (data == NULL)
-  { return(enif_make_string(env, "<<NULL>>", ERL_NIF_LATIN1)); }
+  { return(enif_make_string(env, "", ERL_NIF_LATIN1)); }
   else
   { return(enif_make_string(env, data, ERL_NIF_LATIN1)); }
 }
@@ -174,6 +176,32 @@ ERL_NIF_TERM exmagick_info_set_opt (ErlNifEnv *env, int argc, const ERL_NIF_TERM
   }
 
   return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
+
+ehandler:
+  return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
+}
+
+ERL_NIF_TERM exmagick_info_get_opt (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+  char atom[EXM_MAX_ATOM_SIZE];
+  exm_resource_t *resource;
+
+  EXM_INIT;
+  ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
+
+  if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
+  { EXM_FAIL(ehandler, "argv[0]: bad argument"); }
+
+  if (0 == enif_get_atom(env, argv[1], atom, EXM_MAX_ATOM_SIZE, ERL_NIF_LATIN1))
+  { EXM_FAIL(ehandler, "argv[1]: bad argument"); }
+
+  if (strcmp("adjoin", atom) == 0)
+  {
+    if (resource->i_info->adjoin == 0)
+    { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_atom(env, "false"))); }
+    else if (resource->i_info->adjoin == 1)
+    { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_atom(env, "true"))); }
+  }
 
 ehandler:
   return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
