@@ -1,17 +1,17 @@
 /* Copyright (c) 2015, Diego Souza
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-  
+
 #include "erl_nif.h"
 #include <magick/api.h>
 #include <stdio.h>
@@ -114,10 +114,10 @@ static
 ERL_NIF_TERM exmagick_make_utf8str (ErlNifEnv *env, const char *data)
 {
   ErlNifBinary utf8;
-  
+
   size_t datalen = data == NULL ? 0 : strlen(data); /* TODO:strlen is wrong */
   if (0 == enif_alloc_binary(datalen, &utf8))
-  { return(enif_raise_exception(env, enif_make_atom(env, "memory_error")));}
+  { return(enif_make_badarg(env)); } /* XXX: use enif_raise_exception or a better way to report a memory error */
 
   memcpy(utf8.data, data, datalen);
   return(enif_make_binary(env, &utf8));
@@ -234,14 +234,14 @@ ERL_NIF_TERM exmagick_image_load (ErlNifEnv *env, int argc, const ERL_NIF_TERM a
     DestroyImage(resource->image);
     resource->image = NULL;
   }
-  
+
   resource->image = ReadImage(resource->i_info, &resource->e_info);
   if (resource->image == NULL)
   {
     CatchException(&resource->e_info);
     EXM_FAIL(ehandler, resource->e_info.reason);
   }
-  
+
   return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
 
 ehandler:
