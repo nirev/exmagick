@@ -43,6 +43,7 @@ static ERL_NIF_TERM exmagick_image_load (ErlNifEnv *env, int argc, const ERL_NIF
 static ERL_NIF_TERM exmagick_image_dump (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_set_attr   (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_get_attr   (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_set_size   (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
 ErlNifFunc exmagick_interface[] =
 {
@@ -50,7 +51,8 @@ ErlNifFunc exmagick_interface[] =
   {"image_load", 2, exmagick_image_load},
   {"image_dump", 2, exmagick_image_dump},
   {"set_attr", 3, exmagick_set_attr},
-  {"get_attr", 2, exmagick_get_attr}
+  {"get_attr", 2, exmagick_get_attr},
+  {"size", 3, exmagick_set_size}
 };
 
 ERL_NIF_INIT(Elixir.ExMagick, exmagick_interface, exmagick_load, NULL, NULL, exmagick_unload)
@@ -148,7 +150,7 @@ ERL_NIF_TERM exmagick_image (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
   resource->i_info = CloneImageInfo(0);
   if (resource->i_info == NULL)
   { EXM_FAIL(ehandler, "CloneImageInfo"); }
-  // initializes exception to default values (badly named function)
+  /* initializes exception to default values (badly named function) */
   GetExceptionInfo(&resource->e_info);
 
   result = enif_make_resource(env, (void *) resource);
@@ -162,6 +164,43 @@ ehandler:
     { DestroyImageInfo(resource->i_info); }
     enif_release_resource(resource);
   }
+  return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
+}
+
+static
+ERL_NIF_TERM exmagick_set_size (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+  long width, height;
+  Image* resized_image;
+  exm_resource_t *resource;
+
+  EXM_INIT;
+  ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
+
+  if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
+  { EXM_FAIL(ehandler, "init not called"); }
+
+  if (resource->image == NULL)
+  { EXM_FAIL(ehandler, "image not loaded"); }
+
+  if (0 == enif_get_long(env, argv[1], &width))
+  { EXM_FAIL(ehandler, "width: bad argument"); }
+
+  if (0 == enif_get_long(env, argv[2], &height))
+  { EXM_FAIL(ehandler, "height: bad argument"); }
+
+  resized_image = ScaleImage(resource->image, width, height, &resource->e_info);
+  if (resized_image == NULL)
+  {
+    CatchException(&resource->e_info);
+    EXM_FAIL(ehandler, resource->e_info.reason);
+  }
+  DestroyImage(resource->image);
+  resource->image = resized_image;
+
+  return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
+
+ehandler:
   return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
 }
 
@@ -203,9 +242,6 @@ ERL_NIF_TERM exmagick_get_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
   if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
   { EXM_FAIL(ehandler, "init not called"); }
 
-  if (resource->image == NULL)
-  { EXM_FAIL(ehandler, "image not loaded"); }
-
   if (0 == enif_get_atom(env, argv[1], atom, EXM_MAX_ATOM_SIZE, ERL_NIF_LATIN1))
   { EXM_FAIL(ehandler, "invalid attribute"); }
 
@@ -218,10 +254,16 @@ ERL_NIF_TERM exmagick_get_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
   }
   if (strcmp("rows", atom) == 0)
   {
+    if (resource->image == NULL)
+    { EXM_FAIL(ehandler, "image not loaded"); }
+
     { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_long(env, resource->image->rows))); }
   }
   if (strcmp("columns", atom) == 0)
   {
+    if (resource->image == NULL)
+    { EXM_FAIL(ehandler, "image not loaded"); }
+
     { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_long(env, resource->image->columns))); }
   }
   else if (strcmp("magick", atom) == 0)

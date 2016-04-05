@@ -74,6 +74,12 @@ defmodule ExMagick do
     end
   end
 
+  @dock """
+  Resizes an image.
+  """
+  @defbang {:size, 3}
+  def size(img, width, height), do: fail
+
   @doc """
   Creates a new image structure with default values. You may tune
   image params using the `attr` function.

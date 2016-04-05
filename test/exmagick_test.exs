@@ -30,14 +30,43 @@ defmodule ExMagickTest do
   end
 
   test "get image size", %{images: images} do
-    img = Path.join images, "elixir.png"
+    src = Path.join images, "elixir.png"
     size = ExMagick.image!
-    |> ExMagick.image_load!(img)
-    |> ExMagick.size
+    |> ExMagick.image_load!(src)
+    |> ExMagick.size!
 
-    assert {:ok, %{width: w, height: h}} = size
+    assert %{width: w, height: h} = size
     assert 227 == w
     assert  95 == h
+  end
+
+  test "resizes an image", %{images: images} do
+    src = Path.join images, "elixir.png"
+
+    image = ExMagick.image!
+    |> ExMagick.image_load!(src)
+
+    assert %{width: 227, height: 95} == ExMagick.size!(image)
+
+    new_size = image
+    |> ExMagick.size!(100, 42)
+    |> ExMagick.size!
+
+    assert %{width: 100, height: 42} == new_size
+  end
+
+  test "resizes and saves image", %{images: images, tmpdir: tmpdir} do
+    src = Path.join images, "elixir.png"
+    dst = Path.join tmpdir, "resized.png"
+
+    size = ExMagick.image!
+    |> ExMagick.image_load!(src)
+    |> ExMagick.size!(100, 42)
+    |> ExMagick.image_dump!(dst)
+    |> ExMagick.image_load!(dst)
+    |> ExMagick.size!
+
+    assert %{width: 100, height: 42} == size
   end
 
   test "adjoin attribute" do
