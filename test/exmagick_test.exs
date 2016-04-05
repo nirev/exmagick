@@ -29,6 +29,17 @@ defmodule ExMagickTest do
     assert (File.exists? dst)
   end
 
+  test "get image size", %{images: images} do
+    img = Path.join images, "elixir.png"
+    size = ExMagick.image!
+    |> ExMagick.image_load!(img)
+    |> ExMagick.size
+
+    assert {:ok, %{width: w, height: h}} = size
+    assert 227 == w
+    assert  95 == h
+  end
+
   test "adjoin attribute" do
     value = ExMagick.image! |> ExMagick.attr(:adjoin)
     assert {:ok, true} == value

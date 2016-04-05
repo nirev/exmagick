@@ -20,7 +20,7 @@ defmodule ExMagick.Mixfile do
   def project do
     [ app: :exmagick,
       deps: deps,
-      elixir: "~> 1.1",
+      elixir: "~> 1.2",
       version: "0.0.1",
       aliases: aliases,
       compilers: [:exMagick | Mix.compilers]

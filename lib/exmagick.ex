@@ -63,6 +63,17 @@ defmodule ExMagick do
   @defbang {:attr, 2}
   def attr(img, k), do: get_attr(img, k)
 
+  @dock """
+  Query image size. Returns a {width, height} tuple.
+  """
+  @defbang {:size, 1}
+  def size(img) do
+    with({:ok, width}  <- attr(img, :columns),
+          {:ok, height} <- attr(img, :rows)) do
+      {:ok, %{width: width, height: height}}
+    end
+  end
+
   @doc """
   Creates a new image structure with default values. You may tune
   image params using the `attr` function.

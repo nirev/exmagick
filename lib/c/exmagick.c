@@ -175,7 +175,7 @@ ERL_NIF_TERM exmagick_set_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
   ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
 
   if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
-  { EXM_FAIL(ehandler, "argv[0]: bad argument"); }
+  { EXM_FAIL(ehandler, "init not called"); }
 
   if (0 == enif_get_atom(env, argv[1], atom, EXM_MAX_ATOM_SIZE, ERL_NIF_LATIN1))
   { EXM_FAIL(ehandler, "argv[1]: bad argument"); }
@@ -201,10 +201,13 @@ ERL_NIF_TERM exmagick_get_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
   ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
 
   if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
-  { EXM_FAIL(ehandler, "argv[0]: bad argument"); }
+  { EXM_FAIL(ehandler, "init not called"); }
+
+  if (resource->image == NULL)
+  { EXM_FAIL(ehandler, "image not loaded"); }
 
   if (0 == enif_get_atom(env, argv[1], atom, EXM_MAX_ATOM_SIZE, ERL_NIF_LATIN1))
-  { EXM_FAIL(ehandler, "argv[1]: bad argument"); }
+  { EXM_FAIL(ehandler, "invalid attribute"); }
 
   if (strcmp("adjoin", atom) == 0)
   {
@@ -212,6 +215,14 @@ ERL_NIF_TERM exmagick_get_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
     { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_atom(env, "false"))); }
     else if (resource->i_info->adjoin == 1)
     { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_atom(env, "true"))); }
+  }
+  if (strcmp("rows", atom) == 0)
+  {
+    { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_long(env, resource->image->rows))); }
+  }
+  if (strcmp("columns", atom) == 0)
+  {
+    { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_long(env, resource->image->columns))); }
   }
   else if (strcmp("magick", atom) == 0)
   { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), exmagick_make_utf8str(env, resource->image->magick))); }
@@ -236,7 +247,7 @@ ERL_NIF_TERM exmagick_image_load (ErlNifEnv *env, int argc, const ERL_NIF_TERM a
   ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
 
   if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
-  { EXM_FAIL(ehandler, "argv[0]: bad argument"); }
+  { EXM_FAIL(ehandler, "init not called"); }
 
   if (0 == exmagick_get_utf8str(env, argv[1], &utf8))
   { EXM_FAIL(ehandler, "argv[1]: bad argument"); }
@@ -272,7 +283,7 @@ ERL_NIF_TERM exmagick_image_dump (ErlNifEnv *env, int argc, const ERL_NIF_TERM a
   ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
 
   if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
-  { EXM_FAIL(ehandler, "argv[0]: bad argument"); }
+  { EXM_FAIL(ehandler, "init not called"); }
 
   if (0 == exmagick_get_utf8str(env, argv[1], &utf8))
   { EXM_FAIL(ehandler, "argv[1]: bad argument"); }
