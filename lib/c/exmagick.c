@@ -28,20 +28,21 @@ typedef struct {
   ExceptionInfo e_info;
 } exm_resource_t;
 
-static int exmagick_load (ErlNifEnv *env, void **data, ERL_NIF_TERM info);
-static void exmagick_unload (ErlNifEnv *env, void *data);
-static void exmagick_destroy (ErlNifEnv *env, void *data);
-static char *exmagick_utf8strcpy(char *dst, ErlNifBinary *utf8, size_t len);
-static int exmagick_get_utf8str (ErlNifEnv *env, ERL_NIF_TERM arg, ErlNifBinary *utf8);
-static int exmagick_get_boolean_u (ErlNifEnv *env, ERL_NIF_TERM arg, unsigned int *p);
+static int    exmagick_load          (ErlNifEnv *env, void **data, ERL_NIF_TERM info);
+static void   exmagick_unload        (ErlNifEnv *env, void *data);
+static void   exmagick_destroy       (ErlNifEnv *env, void *data);
+static char  *exmagick_utf8strcpy    (char *dst, ErlNifBinary *utf8, size_t len);
+static int    exmagick_get_utf8str   (ErlNifEnv *env, ERL_NIF_TERM arg, ErlNifBinary *utf8);
+static int    exmagick_get_boolean_u (ErlNifEnv *env, ERL_NIF_TERM arg, unsigned int *p);
 
 static ERL_NIF_TERM exmagick_make_utf8str (ErlNifEnv *env, const char *data);
-static ERL_NIF_TERM exmagick_image (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
+/* exported functions */
+static ERL_NIF_TERM exmagick_image      (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_image_load (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_image_dump (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-
-static ERL_NIF_TERM exmagick_set_attr(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-static ERL_NIF_TERM exmagick_get_attr(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_set_attr   (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_get_attr   (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
 ErlNifFunc exmagick_interface[] =
 {
@@ -54,6 +55,11 @@ ErlNifFunc exmagick_interface[] =
 
 ERL_NIF_INIT(Elixir.ExMagick, exmagick_interface, exmagick_load, NULL, NULL, exmagick_unload)
 
+/**
+ * Initializes the module once per VM
+ * - creates a new type name "ExMagick"
+ * - starts GraphicMagick
+ */
 static
 int exmagick_load (ErlNifEnv *env, void **data, const ERL_NIF_TERM info)
 {
@@ -140,9 +146,10 @@ ERL_NIF_TERM exmagick_image (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
   resource->image  = NULL;
   resource->i_info = CloneImageInfo(0);
-  GetExceptionInfo(&resource->e_info);
   if (resource->i_info == NULL)
   { EXM_FAIL(ehandler, "CloneImageInfo"); }
+  // initializes exception to default values (badly named function)
+  GetExceptionInfo(&resource->e_info);
 
   result = enif_make_resource(env, (void *) resource);
   enif_release_resource(resource);
@@ -213,6 +220,12 @@ ehandler:
   return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
 }
 
+/**
+ * Loads an image from file
+ *
+ *  argv[0]: exm_resource
+ *  argv[1]: image path
+ */
 static
 ERL_NIF_TERM exmagick_image_load (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {

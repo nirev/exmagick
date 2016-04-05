@@ -40,10 +40,12 @@ defmodule ExMagick.Mixfile do
 
   defp make_clean(_) do
     File.rm_rf "priv"
-    dirname = Path.dirname Mix.Project.build_path
-    for env <- File.ls! dirname do
-      buildroot = Path.join dirname, env
-      {_, 0} = System.cmd("make", ["buildroot=#{buildroot}", "clean", "--quiet"], into: IO.stream(:stdio, :line))
+    build_dir = Path.dirname Mix.Project.build_path
+    if File.exists? build_dir do
+      for env <- File.ls!(build_dir) do
+        buildroot = Path.join build_dir, env
+        {_, 0} = System.cmd("make", ["buildroot=#{buildroot}", "clean", "--quiet"], into: IO.stream(:stdio, :line))
+      end
     end
   end
 end
