@@ -78,14 +78,24 @@ defmodule ExMagick do
   Resizes an image.
   """
   @defbang {:size, 3}
-  def size(img, width, height), do: fail
+  def size(_img, _width, _height), do: fail
+
+  @doc false
+  @defbang {:image, 0}
+  def image do
+    IO.puts :stderr, "warning: image is deprecated in favor of init." <> Exception.format_stacktrace
+    init
+  end
 
   @doc """
-  Creates a new image structure with default values. You may tune
+  Creates a new image handle with default values. You may tune
   image params using the `attr` function.
   """
-  @defbang {:image, 0}
-  def image, do: fail
+  @defbang {:init, 0}
+  def init do
+    IO.puts :stderr, "warning: image is deprecated in favor of init." <> Exception.format_stacktrace
+    init
+  end
 
   @doc """
   Loads an image from a file.
