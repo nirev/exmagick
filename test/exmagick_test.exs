@@ -55,6 +55,21 @@ defmodule ExMagickTest do
     assert %{width: 100, height: 42} == new_size
   end
 
+  test "thumbnails an image", %{images: images} do
+    src = Path.join images, "elixir.png"
+
+    image = ExMagick.init!
+    |> ExMagick.image_load!(src)
+
+    assert %{width: 227, height: 95} == ExMagick.size!(image)
+
+    new_size = image
+    |> ExMagick.thumb!(42, 42)
+    |> ExMagick.size!
+
+    assert %{width: 42, height: 42} == new_size
+  end
+
   test "resizes and saves image", %{images: images, tmpdir: tmpdir} do
     src = Path.join images, "elixir.png"
     dst = Path.join tmpdir, "resized.png"
