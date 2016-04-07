@@ -44,6 +44,7 @@ static ERL_NIF_TERM exmagick_image_dump  (ErlNifEnv *env, int argc, const ERL_NI
 static ERL_NIF_TERM exmagick_set_attr    (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_get_attr    (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_set_size    (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_image_thumb (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
 ErlNifFunc exmagick_interface[] =
 {
@@ -52,6 +53,7 @@ ErlNifFunc exmagick_interface[] =
   {"image_dump", 2, exmagick_image_dump},
   {"set_attr", 3, exmagick_set_attr},
   {"get_attr", 2, exmagick_get_attr},
+  {"thumb", 3, exmagick_image_thumb},
   {"size", 3, exmagick_set_size}
 };
 
@@ -198,6 +200,43 @@ ERL_NIF_TERM exmagick_set_size (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
   }
   DestroyImage(resource->image);
   resource->image = resized_image;
+
+  return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
+
+ehandler:
+  return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
+}
+
+static
+ERL_NIF_TERM exmagick_image_thumb (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+  long width, height;
+  Image* thumb;
+  exm_resource_t *resource;
+
+  EXM_INIT;
+  ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
+
+  if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
+  { EXM_FAIL(ehandler, "invalid handle"); }
+
+  if (resource->image == NULL)
+  { EXM_FAIL(ehandler, "image not loaded"); }
+
+  if (0 == enif_get_long(env, argv[1], &width))
+  { EXM_FAIL(ehandler, "width: bad argument"); }
+
+  if (0 == enif_get_long(env, argv[2], &height))
+  { EXM_FAIL(ehandler, "height: bad argument"); }
+
+  thumb = ThumbnailImage(resource->image, width, height, &resource->e_info);
+  if (thumb == NULL)
+  {
+    CatchException(&resource->e_info);
+    EXM_FAIL(ehandler, resource->e_info.reason);
+  }
+  DestroyImage(resource->image);
+  resource->image = thumb;
 
   return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
 

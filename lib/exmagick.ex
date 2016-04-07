@@ -80,6 +80,12 @@ defmodule ExMagick do
   @defbang {:size, 3}
   def size(_img, _width, _height), do: fail
 
+  @dock """
+  Generates a thumbnail for an image.
+  """
+  @defbang {:thumb, 3}
+  def thumb(_img, _width, _height), do: fail
+
   @doc false
   @defbang {:image, 0}
   def image do
