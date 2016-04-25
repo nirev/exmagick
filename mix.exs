@@ -19,11 +19,28 @@ defmodule ExMagick.Mixfile do
 
   def project do
     [ app: :exmagick,
-      deps: deps,
-      elixir: "~> 1.2",
       version: "0.0.1",
+      elixir: "~> 1.2",
+      description: description,
+      package: package,
+      deps: deps,
       aliases: aliases,
       compilers: [:exMagick | Mix.compilers]
+    ]
+  end
+
+  defp description do
+    """
+    ExMagick is a library for manipulating images interfacing with GraphicsMagick.
+    It's implemented using Erlang NIFs (Native Implemented Functions).
+    """
+  end
+
+  defp package do
+    [
+      maintainers: ["Guilherme nirev", "Diego Dsouza", "Renan Milhouse"],
+      licenses: ["BSD-3"],
+      links: %{"GitHub" => "https://github.com/Xerpa/exmagick"}
     ]
   end
 
