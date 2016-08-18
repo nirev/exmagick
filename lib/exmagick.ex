@@ -59,8 +59,6 @@ defmodule ExMagick do
   """
   @opaque image :: <<>>
 
-  use ExMagick.Bang
-
   @on_load {:load, 0}
   @spec load() :: no_return
   @doc false
@@ -69,7 +67,12 @@ defmodule ExMagick do
     :erlang.load_nif(sofile, 0)
   end
 
-  @defbang {:attr, 3}
+  @spec attr!(image, atom, term) :: image
+  def attr!(handle, attribute, value) do
+    {:ok, handle} = attr(handle, attribute, value)
+    handle
+  end
+
   @spec attr(image, atom, term) :: {:ok, image} | {:error, reason :: term}
   @doc """
   Changes image `attribute`s.
@@ -78,16 +81,21 @@ defmodule ExMagick do
   * `:adjoin` (defaults to `true`) - set to `false` to produce different images
   for each frame;
   """
-  def attr(image_handle, attribute, value) when is_atom(attribute) do
+  def attr(handle, attribute, value) when is_atom(attribute) do
     case attribute do
       :adjoin when is_boolean(value) ->
-        set_attr(image_handle, attribute, value)
+        set_attr(handle, attribute, value)
       _ ->
         {:error, "unknown attribute #{attribute}"}
     end
   end
 
-  @defbang {:attr, 2}
+  @spec attr!(image, atom) :: image
+  def attr!(handle, attribute) do
+    {:ok, handle} = attr(handle, attribute)
+    handle
+  end
+
   @spec attr(image, atom) :: {:ok, attr_value :: term} | {:error, reason :: term}
   @doc """
   Queries `attribute` on image.
@@ -96,30 +104,45 @@ defmodule ExMagick do
   available:
   * `:magick` - Image encoding format (e.g. "GIF");
   """
-  def attr(image_handle, attribute), do: get_attr(image_handle, attribute)
+  def attr(handle, attribute), do: get_attr(handle, attribute)
 
-  @defbang {:size, 1}
+  @spec size!(image) :: %{height: pos_integer, width: pos_integer}
+  def size!(handle) do
+    {:ok, image_size} = size(handle)
+    image_size
+  end
+
   @spec size(image) :: {:ok, %{height: pos_integer, width: pos_integer}}
   @doc """
   Queries the image size
   """
-  def size(image_handle) do
+  def size(handle) do
     with \
-      {:ok, width}  <- attr(image_handle, :columns),
-      {:ok, height} <- attr(image_handle, :rows)
+      {:ok, width}  <- attr(handle, :columns),
+      {:ok, height} <- attr(handle, :rows)
     do
       {:ok, %{width: width, height: height}}
     end
   end
 
-  @defbang {:size, 3}
+  @spec size!(image, pos_integer, pos_integer) :: image
+  def size!(handle, width, height) do
+    {:ok, handle} = size(handle, width, height)
+    handle
+  end
+
   @spec size(image, pos_integer, pos_integer) :: {:ok, image} | {:error, reason :: term}
   @doc """
   Resizes the image.
   """
-  def size(_image_handle, _width, _height), do: fail
+  def size(_handle, _width, _height), do: fail
 
-  @defbang {:thumb, 3}
+  @spec thumb!(image, pos_integer, pos_integer) :: image
+  def thumb!(handle, width, height) do
+    {:ok, handle} = thumb(handle, width, height)
+    handle
+  end
+
   @spec thumb(image, pos_integer, pos_integer) :: {:ok, image} | {:error, reason :: term}
   @doc """
   Generates a thumbnail for image.
@@ -127,16 +150,26 @@ defmodule ExMagick do
   _Note that this method resizes the image as quickly as possible, with more
   concern for speed than resulting image quality._
   """
-  def thumb(_image_handle, _width, _height), do: fail
+  def thumb(_handle, _width, _height), do: fail
 
-  @defbang {:image, 0}
+  @doc false
+  def image! do
+    {:ok, handle} = image()
+    handle
+  end
+
   @doc false
   def image do
     IO.puts :stderr, "warning: image is deprecated in favor of init." <> Exception.format_stacktrace
     init
   end
 
-  @defbang {:init, 0}
+  @spec init!() :: image
+  def init! do
+    {:ok, handle} = init()
+    handle
+  end
+
   @spec init() :: {:ok, image} | {:error, reason :: term}
   @doc """
   Creates a new image handle with default values.
@@ -145,14 +178,24 @@ defmodule ExMagick do
   """
   def init, do: fail
 
-  @defbang {:image_load, 2}
+  @spec image_load!(image, Path.t) :: image
+  def image_load!(handle, path) do
+    {:ok, handle} = image_load(handle, path)
+    handle
+  end
+
   @spec image_load(image, Path.t) :: {:ok, image} | {:error, reason :: term}
   @doc """
   Loads into the handler an image from a file.
   """
-  def image_load(_image_handle, _path), do: fail
+  def image_load(_handle, _path), do: fail
 
-  @defbang {:image_dump, 2}
+  @spec image_dump!(image, Path.t) :: image
+  def image_dump!(handle, path) do
+    {:ok, handle} = image_dump(handle, path)
+    handle
+  end
+
   @spec image_dump(image, Path.t) :: {:ok, image} | {:error, reason :: term}
   @doc """
   Saves an image to one or multiple files.
@@ -160,13 +203,13 @@ defmodule ExMagick do
   If the attr `:adjoin` is `false`, multiple files will be created and the
   filename is expected to have a printf-formatting sytle (ex.: `foo%0d.png`).
   """
-  def image_dump(_image_handle, _path), do: fail
+  def image_dump(_handle, _path), do: fail
 
   @spec set_attr(image, atom, term) :: {:ok, image} | {:error, reason :: term}
-  defp set_attr(_image_handle, _attribute, _value), do: fail
+  defp set_attr(_handle, _attribute, _value), do: fail
 
   @spec get_attr(image, atom) :: {:ok, attr_value :: term} | {:error, reason :: term}
-  defp get_attr(_image_handle, _attribute), do: fail
+  defp get_attr(_handle, _attribute), do: fail
 
   defp fail, do: {:error, "native function"}
 end
