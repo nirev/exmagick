@@ -12,113 +12,161 @@
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule ExMagick do
-  use ExMagick.Bang
+  @moduledoc """
+  NIF bindings to the GraphicsMagick API.
 
-  @docmodule """
+  ## Examples
 
-  NIF bindings to GraphicsImage API. All functions returns an tuple in
-  the form `{:ok, image}` or `{:error, reason}` and for each function
-  there is the bang version of it.
+  *Transform a PNG image to JPEG*
+  ```
+  ExMagick.init!()
+  |> ExMagick.image_load!(Path.join(__DIR__, "../test/images/elixir.png"))
+  |> ExMagick.image_dump!("/tmp/elixir.jpg")
+  ```
 
-  Following a couple of examples. The first one transforms a PNG image
-  to JPEG. The second one queries a file about its type.
+  *Query a file type*
+  ```
+  ExMagick.init!()
+  |> ExMagick.image_load!(Path.join(__DIR__, "../test/images/elixir.png"))
+  |> ExMagick.attr!(:magick)
+  ```
 
-  iex> ExMagick.image!
-  ...> |> ExMagick.image_load(Path.join(__DIR__, "../test/images/elixir.png"))
-  ...> |> ExMagick.image_dump("/tmp/elixir.jpg")
+  *Generate a thumbnail from an image*
+  ```
+  ExMagick.init!()
+  |> ExMagick.image_load!(Path.join(__DIR__, "../test/images/elixir.png"))
+  |> ExMagick.thumb!(64, 64)
+  |> ExMagick.image_dump!("/tmp/elixir-thumbnail.jpg")
+  ```
 
-  iex> ExMagick.image!
-  ...> |> ExMagick.image_load(Path.join(__DIR__, "../test/images/elixir.png"))
-  ...> |> ExMagick.attr(:magick) # == PNG
+  *Generate a thumbnail from an image without breaking errors*
+  ```
+  with {:ok, handler} <- ExMagick.init(),
+       img_path = Path.join(__DIR__, "../test/images/elixir.png"),
+       {:ok, handler2} <- ExMagick.image_load(handler, img_path),
+       {:ok, handler3} <- ExMagick.thumb(handler2, 128, 64),
+       thumb_path = "/tmp/elixir-thumbnail.png",
+       {:ok, _} <- ExMagick.image_dump(handler3, thumb_path),
+    do: {:ok, thumb_path}
+  ```
   """
 
+  @typedoc """
+  A handle used by the GraphicsMagick API
+
+  It's internal structure should never be assumed, instead, it should be used
+  with this module's functions
+  """
+  @opaque image :: <<>>
+
+  use ExMagick.Bang
+
   @on_load {:load, 0}
+  @spec load() :: no_return
+  @doc false
   def load do
     sofile = Path.join([:code.priv_dir(:exmagick), "lib", "libexmagick"])
     :erlang.load_nif(sofile, 0)
   end
 
-  @doc """
-  Change image attributes. Currently the following attributes are
-  available:
-
-  * adjoin [default: true]: unset to produce single image for each
-  frame;
-  """
-
   @defbang {:attr, 3}
-  def attr(img, k, v) when is_atom(k) do
-    case k do
-      :adjoin when is_boolean(v) -> set_attr(img, k, v)
-      _                          -> {:error, "unknown attr #{k}/#{v}"}
+  @spec attr(image, atom, term) :: {:ok, image} | {:error, reason :: term}
+  @doc """
+  Changes image `attribute`s.
+
+  Currently the following `attribute`s are available:
+  * `:adjoin` (defaults to `true`) - set to `false` to produce different images
+  for each frame;
+  """
+  def attr(image_handle, attribute, value) when is_atom(attribute) do
+    case attribute do
+      :adjoin when is_boolean(value) ->
+        set_attr(image_handle, attribute, value)
+      _ ->
+        {:error, "unknown attribute #{attribute}"}
     end
   end
 
-  @doc """
-  Query image attribute. In addition to the attrs defined in `attr/3`
-  the following is avaialble:
-
-  * magick: Image encoding format (e.g. "GIF");
-  """
   @defbang {:attr, 2}
-  def attr(img, k), do: get_attr(img, k)
+  @spec attr(image, atom) :: {:ok, attr_value :: term} | {:error, reason :: term}
+  @doc """
+  Queries `attribute` on image.
 
-  @dock """
-  Query image size. Returns a {width, height} tuple.
+  In addition to the attributess defined in `attr/3`, the following are
+  available:
+  * `:magick` - Image encoding format (e.g. "GIF");
   """
+  def attr(image_handle, attribute), do: get_attr(image_handle, attribute)
+
   @defbang {:size, 1}
-  def size(img) do
-    with({:ok, width}  <- attr(img, :columns),
-          {:ok, height} <- attr(img, :rows)) do
+  @spec size(image) :: {:ok, %{height: pos_integer, width: pos_integer}}
+  @doc """
+  Queries the image size
+  """
+  def size(image_handle) do
+    with \
+      {:ok, width}  <- attr(image_handle, :columns),
+      {:ok, height} <- attr(image_handle, :rows)
+    do
       {:ok, %{width: width, height: height}}
     end
   end
 
-  @dock """
-  Resizes an image.
-  """
   @defbang {:size, 3}
-  def size(_img, _width, _height), do: fail
-
-  @dock """
-  Generates a thumbnail for an image.
+  @spec size(image, pos_integer, pos_integer) :: {:ok, image} | {:error, reason :: term}
+  @doc """
+  Resizes the image.
   """
-  @defbang {:thumb, 3}
-  def thumb(_img, _width, _height), do: fail
+  def size(_image_handle, _width, _height), do: fail
 
-  @doc false
+  @defbang {:thumb, 3}
+  @spec thumb(image, pos_integer, pos_integer) :: {:ok, image} | {:error, reason :: term}
+  @doc """
+  Generates a thumbnail for image.
+
+  _Note that this method resizes the image as quickly as possible, with more
+  concern for speed than resulting image quality._
+  """
+  def thumb(_image_handle, _width, _height), do: fail
+
   @defbang {:image, 0}
+  @doc false
   def image do
     IO.puts :stderr, "warning: image is deprecated in favor of init." <> Exception.format_stacktrace
     init
   end
 
-  @doc """
-  Creates a new image handle with default values. You may tune
-  image params using the `attr` function.
-  """
   @defbang {:init, 0}
-  def init do
-    IO.puts :stderr, "warning: image is deprecated in favor of init." <> Exception.format_stacktrace
-    init
-  end
-
+  @spec init() :: {:ok, image} | {:error, reason :: term}
   @doc """
-  Loads an image from a file.
+  Creates a new image handle with default values.
+
+  Image attributes may be tuned by using the `attr/2` function.
   """
+  def init, do: fail
+
   @defbang {:image_load, 2}
-  def image_load(_img, _path), do: fail
-
+  @spec image_load(image, Path.t) :: {:ok, image} | {:error, reason :: term}
   @doc """
-  Saves an image to one or multiple files. If the attr `adjoin` is
-  false multiple files will be created and the filename is expected to
-  have a printf-formatting sytle (ex.: foo%0d.png).
+  Loads into the handler an image from a file.
   """
-  @defbang {:image_dump, 2}
-  def image_dump(_img, _path), do: fail
+  def image_load(_image_handle, _path), do: fail
 
-  defp set_attr(_img, _key, _val), do: fail
-  defp get_attr(_img, _key), do: fail
+  @defbang {:image_dump, 2}
+  @spec image_dump(image, Path.t) :: {:ok, image} | {:error, reason :: term}
+  @doc """
+  Saves an image to one or multiple files.
+
+  If the attr `:adjoin` is `false`, multiple files will be created and the
+  filename is expected to have a printf-formatting sytle (ex.: `foo%0d.png`).
+  """
+  def image_dump(_image_handle, _path), do: fail
+
+  @spec set_attr(image, atom, term) :: {:ok, image} | {:error, reason :: term}
+  defp set_attr(_image_handle, _attribute, _value), do: fail
+
+  @spec get_attr(image, atom) :: {:ok, attr_value :: term} | {:error, reason :: term}
+  defp get_attr(_image_handle, _attribute), do: fail
 
   defp fail, do: {:error, "native function"}
 end
