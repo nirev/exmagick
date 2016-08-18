@@ -43,10 +43,10 @@ defmodule ExMagick do
   ```
   with {:ok, handler} <- ExMagick.init(),
        img_path = Path.join(__DIR__, "../test/images/elixir.png"),
-       {:ok, handler2} <- ExMagick.image_load(handler, img_path),
-       {:ok, handler3} <- ExMagick.thumb(handler2, 128, 64),
+       {:ok, _} <- ExMagick.image_load(handler, img_path),
+       {:ok, _} <- ExMagick.thumb(handler, 128, 64),
        thumb_path = "/tmp/elixir-thumbnail.png",
-       {:ok, _} <- ExMagick.image_dump(handler3, thumb_path),
+       {:ok, _} <- ExMagick.image_dump(handler, thumb_path),
     do: {:ok, thumb_path}
   ```
   """

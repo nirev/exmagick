@@ -6,7 +6,7 @@ USAGE
 
 ```elixir
 defp deps do
-  [{:exmagick, git: "https://github.com/xerpa/exmagick.git"}]
+  [{:exmagick, "~> 0.0.1"}]
 end
 ```
 
