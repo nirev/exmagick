@@ -84,6 +84,20 @@ defmodule ExMagickTest do
     assert %{width: 100, height: 42} == size
   end
 
+  test "crops image", %{images: images, tmpdir: tmpdir} do
+    src = Path.join images, "elixir.png"
+    dst = Path.join tmpdir, "cropped.png"
+
+    size = ExMagick.init!
+    |> ExMagick.image_load!(src)
+    |> ExMagick.crop!(0,0, 100, 10)
+    |> ExMagick.image_dump!(dst)
+    |> ExMagick.image_load!(dst)
+    |> ExMagick.size!
+
+    assert %{width: 100, height: 10} == size
+  end
+
   test "adjoin attribute" do
     value = ExMagick.init! |> ExMagick.attr(:adjoin)
     assert {:ok, true} == value
