@@ -41,6 +41,7 @@ static ERL_NIF_TERM exmagick_make_utf8str (ErlNifEnv *env, const char *data);
 static ERL_NIF_TERM exmagick_init_handle (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_image_load  (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_image_dump  (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_crop        (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_set_attr    (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_get_attr    (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_set_size    (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
@@ -54,7 +55,8 @@ ErlNifFunc exmagick_interface[] =
   {"set_attr", 3, exmagick_set_attr},
   {"get_attr", 2, exmagick_get_attr},
   {"thumb", 3, exmagick_image_thumb},
-  {"size", 3, exmagick_set_size}
+  {"size", 3, exmagick_set_size},
+  {"crop", 5, exmagick_crop}
 };
 
 ERL_NIF_INIT(Elixir.ExMagick, exmagick_interface, exmagick_load, NULL, NULL, exmagick_unload)
@@ -118,6 +120,17 @@ char *exmagick_utf8strcpy (char *dst, ErlNifBinary *utf8, size_t size)
   memcpy(dst, utf8->data, rsize);
   dst[rsize] = '\0';
   return dst;
+}
+
+/*
+  The string returned in this function must be freed using MagickFree.
+ */
+static
+char *exmagick_utf8strdup (ErlNifBinary *utf8)
+{
+  char *dst = MagickMalloc(utf8->size + 1);
+  if (dst == NULL) { return NULL; }
+  return exmagick_utf8strcpy(dst, utf8, utf8->size + 1);
 }
 
 static
@@ -208,6 +221,51 @@ ehandler:
 }
 
 static
+ERL_NIF_TERM exmagick_crop (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+  Image* cropped_image;
+  RectangleInfo rect;
+  exm_resource_t *resource;
+
+  EXM_INIT;
+  ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
+
+  if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
+  { EXM_FAIL(ehandler, "invalid handle"); }
+
+  if (resource->image == NULL)
+  { EXM_FAIL(ehandler, "image not loaded"); }
+
+  /* build rectangle */
+  if (0 == enif_get_long(env, argv[1], &rect.x))
+  { EXM_FAIL(ehandler, "x0: bad argument"); }
+
+  if (0 == enif_get_long(env, argv[2], &rect.y))
+  { EXM_FAIL(ehandler, "y0: bad argument"); }
+
+  if (0 == enif_get_ulong(env, argv[3], &rect.width))
+  { EXM_FAIL(ehandler, "width: bad argument"); }
+
+  if (0 == enif_get_ulong(env, argv[4], &rect.height))
+  { EXM_FAIL(ehandler, "height: bad argument"); }
+
+  /* actually crops image */
+  cropped_image = CropImage(resource->image, &rect, &resource->e_info);
+  if (cropped_image == NULL)
+  {
+    CatchException(&resource->e_info);
+    EXM_FAIL(ehandler, resource->e_info.reason);
+  }
+  DestroyImage(resource->image);
+  resource->image = cropped_image;
+
+  return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
+
+ehandler:
+  return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
+}
+
+static
 ERL_NIF_TERM exmagick_image_thumb (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
   long width, height;
@@ -247,6 +305,7 @@ ehandler:
 static
 ERL_NIF_TERM exmagick_set_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
+  ErlNifBinary utf8;
   char atom[EXM_MAX_ATOM_SIZE];
   exm_resource_t *resource;
 
@@ -262,7 +321,16 @@ ERL_NIF_TERM exmagick_set_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
   if (strcmp("adjoin", atom) == 0)
   {
     if (0 == exmagick_get_boolean_u(env, argv[2], &resource->i_info->adjoin))
-    { printf("wat\n"); EXM_FAIL(ehandler, "argv[2]: bad argument"); }
+    { EXM_FAIL(ehandler, "argv[2]: bad argument"); }
+  }
+  if (strcmp("density", atom) == 0)
+  {
+    if (0 == exmagick_get_utf8str(env, argv[2], &utf8))
+    { EXM_FAIL(ehandler, "argv[2]: bad argument"); }
+    MagickFree(resource->i_info->density);
+    resource->i_info->density=exmagick_utf8strdup(&utf8);
+    if (resource->i_info->density == NULL)
+    { EXM_FAIL(ehandler, "could not set density"); }
   }
 
   return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
@@ -306,6 +374,8 @@ ERL_NIF_TERM exmagick_get_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 
     { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_long(env, resource->image->columns))); }
   }
+  if (strcmp("density", atom) == 0)
+  { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), exmagick_make_utf8str(env, resource->i_info->density))); }
   else if (strcmp("magick", atom) == 0)
   { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), exmagick_make_utf8str(env, resource->image->magick))); }
 

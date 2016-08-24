@@ -49,6 +49,16 @@ defmodule ExMagick do
        {:ok, _} <- ExMagick.image_dump(handler, thumb_path),
     do: {:ok, thumb_path}
   ```
+
+  * Converting a multi-page PDF to individual PNG images with 300dpi
+  ```
+  ExMagick.init!
+  |> ExMagick.attr!(:density, "300") # density should be set before loading the image
+  |> ExMagick.image_load!(Path.joint(__DIR__, "../test/images/elixir.pdf"))
+  |> ExMagick.attr!(:adjoin, false)
+  |> ExMagick.image_dump!("/tmp/splitted-page-%0d.png")
+  ```
+
   """
 
   @typedoc """
@@ -84,6 +94,8 @@ defmodule ExMagick do
   def attr(handle, attribute, value) when is_atom(attribute) do
     case attribute do
       :adjoin when is_boolean(value) ->
+        set_attr(handle, attribute, value)
+      :density when is_binary(value) ->
         set_attr(handle, attribute, value)
       _ ->
         {:error, "unknown attribute #{attribute}"}
@@ -136,6 +148,21 @@ defmodule ExMagick do
   Resizes the image.
   """
   def size(_handle, _width, _height), do: fail
+
+  @spec crop!(image, non_neg_integer, non_neg_integer, non_neg_integer, non_neg_integer) :: image
+  def crop!(handle, x, y, width, height) do
+    {:ok, handle} = crop(handle, x, y, width, height)
+    handle
+  end
+
+  @spec crop(image, non_neg_integer, non_neg_integer, non_neg_integer, non_neg_integer) :: {:ok, image} | {:error, reason :: term}
+  @doc """
+  Crops the image.
+
+  * x,y refer to starting point, where (0,0) is top left
+  """
+  def crop(_handle, _x, _y, _width, _height), do: fail
+
 
   @spec thumb!(image, pos_integer, pos_integer) :: image
   def thumb!(handle, width, height) do
