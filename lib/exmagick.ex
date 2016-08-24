@@ -95,6 +95,8 @@ defmodule ExMagick do
     case attribute do
       :adjoin when is_boolean(value) ->
         set_attr(handle, attribute, value)
+      :density when is_binary(value) ->
+        set_attr(handle, attribute, value)
       _ ->
         {:error, "unknown attribute #{attribute}"}
     end

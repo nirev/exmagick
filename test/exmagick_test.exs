@@ -98,6 +98,22 @@ defmodule ExMagickTest do
     assert %{width: 100, height: 10} == size
   end
 
+  test "load PDF with density", %{images: images} do
+    src = Path.join images, "elixir.pdf"
+
+    image = ExMagick.init!
+    |> ExMagick.image_load!(src)
+
+    assert %{width: 227, height: 95} == ExMagick.size!(image)
+
+    size_with_density = ExMagick.init!
+    |> ExMagick.attr!(:density, "300")
+    |> ExMagick.image_load!(src)
+    |> ExMagick.size!
+
+    assert %{width: 946, height: 396} == size_with_density
+  end
+
   test "adjoin attribute" do
     value = ExMagick.init! |> ExMagick.attr(:adjoin)
     assert {:ok, true} == value

@@ -122,6 +122,17 @@ char *exmagick_utf8strcpy (char *dst, ErlNifBinary *utf8, size_t size)
   return dst;
 }
 
+/*
+  The string returned in this function must be freed using MagickFree.
+ */
+static
+char *exmagick_utf8strdup (ErlNifBinary *utf8)
+{
+  char *dst = MagickMalloc(utf8->size + 1);
+  if (dst == NULL) { return NULL; }
+  return exmagick_utf8strcpy(dst, utf8, utf8->size + 1);
+}
+
 static
 ERL_NIF_TERM exmagick_make_utf8str (ErlNifEnv *env, const char *data)
 {
@@ -294,6 +305,7 @@ ehandler:
 static
 ERL_NIF_TERM exmagick_set_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
+  ErlNifBinary utf8;
   char atom[EXM_MAX_ATOM_SIZE];
   exm_resource_t *resource;
 
@@ -309,7 +321,16 @@ ERL_NIF_TERM exmagick_set_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
   if (strcmp("adjoin", atom) == 0)
   {
     if (0 == exmagick_get_boolean_u(env, argv[2], &resource->i_info->adjoin))
-    { printf("wat\n"); EXM_FAIL(ehandler, "argv[2]: bad argument"); }
+    { EXM_FAIL(ehandler, "argv[2]: bad argument"); }
+  }
+  if (strcmp("density", atom) == 0)
+  {
+    if (0 == exmagick_get_utf8str(env, argv[2], &utf8))
+    { EXM_FAIL(ehandler, "argv[2]: bad argument"); }
+    MagickFree(resource->i_info->density);
+    resource->i_info->density=exmagick_utf8strdup(&utf8);
+    if (resource->i_info->density == NULL)
+    { EXM_FAIL(ehandler, "could not set density"); }
   }
 
   return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
@@ -353,6 +374,8 @@ ERL_NIF_TERM exmagick_get_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 
     { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_long(env, resource->image->columns))); }
   }
+  if (strcmp("density", atom) == 0)
+  { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), exmagick_make_utf8str(env, resource->i_info->density))); }
   else if (strcmp("magick", atom) == 0)
   { return(enif_make_tuple2(env, enif_make_atom(env, "ok"), exmagick_make_utf8str(env, resource->image->magick))); }
 
