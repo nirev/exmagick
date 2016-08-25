@@ -40,7 +40,8 @@ defmodule ExMagick.Mixfile do
     [
       maintainers: ["Guilherme nirev", "Diego Dsouza", "Renan Milhouse"],
       licenses: ["BSD-3"],
-      links: %{"GitHub" => "https://github.com/Xerpa/exmagick"}
+      links: %{"GitHub" => "https://github.com/Xerpa/exmagick"},
+      files: ["AUTHOR", "bin", "COPYING", "lib", "Makefile", "mix.exs", "README.md"]
     ]
   end
 
