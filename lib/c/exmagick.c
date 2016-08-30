@@ -37,21 +37,24 @@ static int    exmagick_get_boolean_u (ErlNifEnv *env, ERL_NIF_TERM arg, unsigned
 
 static ERL_NIF_TERM exmagick_make_utf8str (ErlNifEnv *env, const char *data);
 
-/* exported functions */
-static ERL_NIF_TERM exmagick_init_handle (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-static ERL_NIF_TERM exmagick_image_load  (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-static ERL_NIF_TERM exmagick_image_dump  (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-static ERL_NIF_TERM exmagick_crop        (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-static ERL_NIF_TERM exmagick_set_attr    (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-static ERL_NIF_TERM exmagick_get_attr    (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-static ERL_NIF_TERM exmagick_set_size    (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-static ERL_NIF_TERM exmagick_image_thumb (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_crop            (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_set_attr        (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_get_attr        (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_set_size        (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_init_handle     (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_image_thumb     (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_image_load_file (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_image_load_blob (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_image_dump_file (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_image_dump_blob (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
 ErlNifFunc exmagick_interface[] =
 {
   {"init", 0, exmagick_init_handle},
-  {"image_load", 2, exmagick_image_load},
-  {"image_dump", 2, exmagick_image_dump},
+  {"image_load_blob", 2, exmagick_image_load_blob},
+  {"image_load_file", 2, exmagick_image_load_file},
+  {"image_dump_file", 2, exmagick_image_dump_file},
+  {"image_dump_blob", 1, exmagick_image_dump_blob},
   {"set_attr", 3, exmagick_set_attr},
   {"get_attr", 2, exmagick_get_attr},
   {"thumb", 3, exmagick_image_thumb},
@@ -323,6 +326,12 @@ ERL_NIF_TERM exmagick_set_attr (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
     if (0 == exmagick_get_boolean_u(env, argv[2], &resource->i_info->adjoin))
     { EXM_FAIL(ehandler, "argv[2]: bad argument"); }
   }
+  if (strcmp("magick", atom) == 0)
+  {
+    if (0 == exmagick_get_utf8str(env, argv[2], &utf8))
+    { EXM_FAIL(ehandler, "argv[2]: bad argument"); }
+    exmagick_utf8strcpy(resource->image->magick, &utf8, MaxTextExtent);
+  }
   if (strcmp("density", atom) == 0)
   {
     if (0 == exmagick_get_utf8str(env, argv[2], &utf8))
@@ -383,14 +392,42 @@ ehandler:
   return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
 }
 
-/**
- * Loads an image from file
- *
- *  argv[0]: exm_resource
- *  argv[1]: image path
- */
 static
-ERL_NIF_TERM exmagick_image_load (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+ERL_NIF_TERM exmagick_image_load_blob (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+  ErlNifBinary blob;
+  exm_resource_t *resource;
+
+  EXM_INIT;
+  ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
+
+  if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
+  { EXM_FAIL(ehandler, "invalid handle"); }
+
+  if (0 == enif_inspect_binary(env, argv[1], &blob))
+  { EXM_FAIL(ehandler, "argv[1]: bad argument"); }
+
+  if (resource->image != NULL)
+  {
+    DestroyImage(resource->image);
+    resource->image = NULL;
+  }
+
+  resource->image = BlobToImage(resource->i_info, blob.data, blob.size, &resource->e_info);
+  if (resource->image == NULL)
+  {
+    CatchException(&resource->e_info);
+    EXM_FAIL(ehandler, resource->e_info.reason);
+  }
+
+  return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
+
+ehandler:
+  return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
+}
+
+static
+ERL_NIF_TERM exmagick_image_load_file (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
   ErlNifBinary utf8;
   exm_resource_t *resource;
@@ -425,7 +462,7 @@ ehandler:
 }
 
 static
-ERL_NIF_TERM exmagick_image_dump (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+ERL_NIF_TERM exmagick_image_dump_file (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
   char filename[MaxTextExtent];
   ErlNifBinary utf8;
@@ -440,7 +477,7 @@ ERL_NIF_TERM exmagick_image_dump (ErlNifEnv *env, int argc, const ERL_NIF_TERM a
   if (0 == exmagick_get_utf8str(env, argv[1], &utf8))
   { EXM_FAIL(ehandler, "argv[1]: bad argument"); }
 
-  exmagick_utf8strcpy(filename, &utf8, MaxTextExtent);
+  exmagick_utf8strcpy (filename, &utf8, MaxTextExtent);
   if (0 == WriteImages(resource->i_info, resource->image, filename, &resource->e_info))
   {
     CatchException(&resource->e_info);
@@ -449,6 +486,33 @@ ERL_NIF_TERM exmagick_image_dump (ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 
   return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
 
+ehandler:
+  return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
+}
+
+static
+ERL_NIF_TERM exmagick_image_dump_blob (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+  void *blob;
+  size_t size;
+  exm_resource_t *resource;
+
+  EXM_INIT;
+  ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
+
+  if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
+  { EXM_FAIL(ehandler, "invalid handle"); }
+
+  blob = ImageToBlob(resource->i_info, resource->image, &size, &resource->e_info);
+  if (NULL == blob)
+  {
+    CatchException(&resource->e_info);
+    EXM_FAIL(ehandler, resource->e_info.reason);
+  }
+
+  return(enif_make_tuple2(env,
+                          enif_make_atom(env, "ok"),
+                          enif_make_resource_binary(env, resource, blob, size)));
 ehandler:
   return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
 }

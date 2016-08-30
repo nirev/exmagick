@@ -1,0 +1,14 @@
+-*- mode: text -*-
+
+v0.0.4
+  * dump and load using binaries
+  * magick attribute is read-write
+
+v0.0.3
+  * crop function
+
+v0.0.2
+  * thumbnail and scale functions
+
+v0.0.1
+  * first version
