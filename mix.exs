@@ -25,6 +25,7 @@ defmodule ExMagick.Mixfile do
       package: package,
       deps: deps,
       aliases: aliases,
+      dialyzer: [paths: ["_build/dev/lib/exmagick/ebin/Elixir.ExMagick.beam"]],
       compilers: [:exMagick | Mix.compilers]
     ]
   end
@@ -47,6 +48,7 @@ defmodule ExMagick.Mixfile do
 
   defp deps do
     [
+      {:dialyxir, "~> 0.3.5", only: [:dev]},
       {:earmark, "~> 0.1", only: :dev},
       {:ex_doc, "~> 0.11", only: :dev}
     ]
