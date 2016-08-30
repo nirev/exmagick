@@ -97,6 +97,8 @@ defmodule ExMagick do
         set_attr(handle, attribute, value)
       :density when is_binary(value) ->
         set_attr(handle, attribute, value)
+      :magick  when is_binary(value) ->
+        set_attr(handle, attribute, value)
       _ ->
         {:error, "unknown attribute #{attribute}"}
     end
@@ -211,11 +213,13 @@ defmodule ExMagick do
     handle
   end
 
-  @spec image_load(image, Path.t) :: {:ok, image} | {:error, reason :: term}
+  @spec image_load(image, Path.t | {:blob, binary}) :: {:ok, image} | {:error, reason :: term}
   @doc """
-  Loads into the handler an image from a file.
+  Loads an image into the handler. You may provide a file path or a
+  tuple `{:blob, ...}` which the second argument is the blob to load.
   """
-  def image_load(_handle, _path), do: fail
+  def image_load(handle, {:blob, blob}), do: image_load_blob(handle, blob)
+  def image_load(handle, path), do: image_load_file(handle, path)
 
   @spec image_dump!(image, Path.t) :: image
   def image_dump!(handle, path) do
@@ -230,7 +234,32 @@ defmodule ExMagick do
   If the attr `:adjoin` is `false`, multiple files will be created and the
   filename is expected to have a printf-formatting sytle (ex.: `foo%0d.png`).
   """
-  def image_dump(_handle, _path), do: fail
+  def image_dump(handle, path), do: image_dump_file(handle, path)
+
+  @spec image_dump(image) :: {:ok, binary} | {:error, reason :: term}
+  @doc """
+  Returns the image as a binary. You can change the type of this image
+  using the `:magick` attribute.
+  """
+  def image_dump(handle), do: image_dump_blob(handle)
+
+  @spec image_dump!(image) :: binary | {:error, reason :: term}
+  def image_dump!(handle) do
+    {:ok, blob} = image_dump(handle)
+    blob
+  end
+
+  @spec image_load_file(image, Path.t) :: {:ok, image} | {:error, reason :: term}
+  defp image_load_file(_handle, _path), do: fail
+
+  @spec image_load_blob(image, binary) :: {:ok, image} | {:error, reason :: term}
+  defp image_load_blob(_handle, _blob), do: fail
+
+  @spec image_dump_file(image, Path.t) :: {:ok, image} | {:error, reason :: term}
+  defp image_dump_file(_handle, _path), do: fail
+
+  @spec image_dump_blob(image) :: {:ok, binary} | {:error, reason :: term}
+  defp image_dump_blob(_handle), do: fail
 
   @spec set_attr(image, atom, term) :: {:ok, image} | {:error, reason :: term}
   defp set_attr(_handle, _attribute, _value), do: fail

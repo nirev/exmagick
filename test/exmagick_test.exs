@@ -29,6 +29,35 @@ defmodule ExMagickTest do
     assert (File.exists? dst)
   end
 
+  test "magick attr", context do
+    png = Path.join context[:images], "elixir.png"
+    mgk = Enum.random(["PDF", "GIF", "JPEG", "PNG"])
+    exm = ExMagick.init!
+    |> ExMagick.image_load!(png)
+
+    ExMagick.attr!(exm, :magick, mgk)
+    assert mgk == ExMagick.attr!(exm, :magick)
+  end
+
+  test "load from blob", context do
+    png = File.read!(Path.join(context[:images], "elixir.png"))
+    assert "PNG" == ExMagick.init!
+    |> ExMagick.image_load!({:blob, png})
+    |> ExMagick.attr!(:magick)
+  end
+
+  test "load(:png) and write(:blob, :jpg)", context do
+    png = Path.join(context[:images], "elixir.png")
+    jpg = ExMagick.init!
+    |> ExMagick.image_load!(png)
+    |> ExMagick.attr!(:magick, "JPEG")
+    |> ExMagick.image_dump!
+
+    assert "JPEG" == ExMagick.init!
+    |> ExMagick.image_load!({:blob, jpg})
+    |> ExMagick.attr!(:magick)
+  end
+
   test "get image size", %{images: images} do
     src = Path.join images, "elixir.png"
     size = ExMagick.init!
