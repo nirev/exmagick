@@ -1,0 +1,23 @@
+#!/bin/bash
+set -euo pipefail
+
+export HOME="$WORKSPACE"
+
+with-session() {
+  while read; do echo -e "\e[0;32m$@\e[0m: $REPLY"; done
+  echo
+}
+
+{
+  [ -r "$WORKSPACE/.mix/rebar" ]                  || { echo y | mix local.rebar; }
+  [ -r "$WORKSPACE/.mix/archives/hex-0.10.4.ez" ] || { echo y | mix local.hex; }
+  mix deps.get
+  [ -r "$DIALYZER_PLT" ] || mix dialyzer.plt
+} | with-session "dependencies"
+
+mix compile | with-session "compilation"
+
+mix dialyzer --halt-exit-status | with-session "dialyzer"
+
+mix test | with-session "test"
+

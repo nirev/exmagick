@@ -25,7 +25,10 @@ defmodule ExMagick.Mixfile do
       package: package,
       deps: deps,
       aliases: aliases,
-      dialyzer: [paths: ["_build/dev/lib/exmagick/ebin/Elixir.ExMagick.beam"]],
+      dialyzer: [
+        paths: ["_build/dev/lib/exmagick/ebin/Elixir.ExMagick.beam"],
+        plt_file: System.get_env("DIALYZER_PLT") || ".dialyzer.plt"
+      ],
       compilers: [:exMagick | Mix.compilers]
     ]
   end

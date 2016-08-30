@@ -7,3 +7,4 @@ priv/
 _build/
 /deps/
 /doc/
+.dialyzer.plt
