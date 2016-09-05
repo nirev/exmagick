@@ -19,7 +19,7 @@ defmodule ExMagick.Mixfile do
 
   def project do
     [ app: :exmagick,
-      version: "0.0.4",
+      version: "0.0.5",
       elixir: "~> 1.2",
       description: description,
       package: package,
@@ -45,7 +45,7 @@ defmodule ExMagick.Mixfile do
       maintainers: ["Guilherme nirev", "Diego Dsouza", "Renan Milhouse"],
       licenses: ["BSD-3"],
       links: %{"GitHub" => "https://github.com/Xerpa/exmagick"},
-      files: ["AUTHOR", "bin", "COPYING", "lib", "Makefile", "mix.exs", "README.md"]
+      files: ["AUTHOR", "bin", "COPYING", "lib", "makefile", "mix.exs", "README.md"]
     ]
   end
 
