@@ -41,6 +41,7 @@ static ERL_NIF_TERM exmagick_crop            (ErlNifEnv *env, int argc, const ER
 static ERL_NIF_TERM exmagick_set_attr        (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_get_attr        (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_set_size        (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_num_pages       (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_init_handle     (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_image_thumb     (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_image_load_file (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
@@ -59,6 +60,7 @@ ErlNifFunc exmagick_interface[] =
   {"get_attr", 2, exmagick_get_attr},
   {"thumb", 3, exmagick_image_thumb},
   {"size", 3, exmagick_set_size},
+  {"num_pages", 1, exmagick_num_pages},
   {"crop", 5, exmagick_crop}
 };
 
@@ -218,6 +220,34 @@ ERL_NIF_TERM exmagick_set_size (ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
   resource->image = resized_image;
 
   return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
+
+ehandler:
+  return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
+}
+
+static
+ERL_NIF_TERM exmagick_num_pages (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+  exm_resource_t *resource;
+  Image* image;
+  int num_pages;
+
+  EXM_INIT;
+  ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
+
+  if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
+  { EXM_FAIL(ehandler, "invalid handle"); }
+
+  if (resource->image == NULL)
+  { EXM_FAIL(ehandler, "image not loaded"); }
+
+  image = resource->image;
+  num_pages = 1;
+
+  while((image = image->next))
+  { ++num_pages; }
+
+  return(enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_int(env, num_pages)));
 
 ehandler:
   return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));

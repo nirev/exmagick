@@ -23,9 +23,11 @@ defmodule ExMagickTest do
   test "image_load(:png) and image_save(:jpg)", context do
     src = Path.join context[:images], "elixir.png"
     dst = Path.join context[:tmpdir], "elixir.jpg"
+
     ExMagick.init!
     |> ExMagick.image_load!(src)
     |> ExMagick.image_dump!(dst)
+
     assert (File.exists? dst)
   end
 
@@ -41,6 +43,7 @@ defmodule ExMagickTest do
 
   test "load from blob", context do
     png = File.read!(Path.join(context[:images], "elixir.png"))
+
     assert "PNG" == ExMagick.init!
     |> ExMagick.image_load!({:blob, png})
     |> ExMagick.attr!(:magick)
@@ -71,7 +74,6 @@ defmodule ExMagickTest do
 
   test "resizes an image", %{images: images} do
     src = Path.join images, "elixir.png"
-
     image = ExMagick.init!
     |> ExMagick.image_load!(src)
 
@@ -86,7 +88,6 @@ defmodule ExMagickTest do
 
   test "thumbnails an image", %{images: images} do
     src = Path.join images, "elixir.png"
-
     image = ExMagick.init!
     |> ExMagick.image_load!(src)
 
@@ -145,6 +146,7 @@ defmodule ExMagickTest do
 
   test "adjoin attribute" do
     value = ExMagick.init! |> ExMagick.attr(:adjoin)
+
     assert {:ok, true} == value
   end
 
@@ -155,6 +157,7 @@ defmodule ExMagickTest do
       value = ExMagick.init!
       |> ExMagick.image_load!(path)
       |> ExMagick.attr!(:magick)
+
       assert type == value
     end
   end
@@ -162,21 +165,44 @@ defmodule ExMagickTest do
   test "image_load(:pdf) and image_save(:jpg)", context do
     src = Path.join context[:images], "elixir.pdf"
     dst = Path.join context[:tmpdir], "elixir.jpg"
+
     ExMagick.init!
     |> ExMagick.image_load!(src)
     |> ExMagick.image_dump!(dst)
+
     assert (File.exists? dst)
   end
 
   test "image_load(:pdf) and image_save([:jpg])", context do
     src = Path.join context[:images], "elixir.pdf"
     dst = Path.join context[:tmpdir], "elixir%0d.jpg"
+
     ExMagick.init!
     |> ExMagick.image_load!(src)
     |> ExMagick.attr!(:adjoin, false)
     |> ExMagick.image_dump!(dst)
+
     refute (File.exists? dst)
     assert 10 == length(File.ls! context[:tmpdir])
   end
 
+  test "num_pages counts pages, multi page pdf", context do
+    src = Path.join context[:images], "elixir.pdf"
+
+    num_pages = ExMagick.init!
+    |> ExMagick.image_load!(src)
+    |> ExMagick.num_pages!
+
+    assert 10 == num_pages
+  end
+
+  test "num_pages counts pages, png", context do
+    src = Path.join context[:images], "elixir.png"
+
+    num_pages = ExMagick.init!
+    |> ExMagick.image_load!(src)
+    |> ExMagick.num_pages!
+
+    assert 1 == num_pages
+  end
 end
