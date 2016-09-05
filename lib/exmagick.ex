@@ -73,8 +73,10 @@ defmodule ExMagick do
   @doc false
   @spec load :: :ok | {:error, {atom, charlist}}
   def load do
-    sofile = Path.join([:code.priv_dir(:exmagick), "lib", "libexmagick"])
-    |> String.to_charlist
+    sofile =
+      Path.join([:code.priv_dir(:exmagick), "lib", "libexmagick"])
+      |> String.to_charlist
+
     :erlang.load_nif(sofile, 0)
   end
 
@@ -129,6 +131,15 @@ defmodule ExMagick do
   """
   @spec attr(handle, atom) :: {:ok, String.t | boolean | non_neg_integer} | exm_error
   def attr(handle, attribute), do: get_attr(handle, attribute)
+
+  @spec num_pages(handle) :: {:ok, non_neg_integer} | exm_error
+  def num_pages(_handle), do: fail
+
+  @spec num_pages!(handle) :: non_neg_integer | exm_error
+  def num_pages!(handle) do
+    {:ok, pages} = num_pages(handle)
+    pages
+  end
 
   @doc """
   Refer to `size/1`.
