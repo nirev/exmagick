@@ -6,6 +6,7 @@ defmodule Mix.Tasks.Compile.ExMagick do
     distroot  = Path.absname (Path.expand "priv", __DIR__)
     buildroot = Mix.Project.build_path
     runcmd("make", ["--quiet", "distroot=#{distroot}", "buildroot=#{buildroot}", "compile", "install"])
+    runcmd("make", ["--quiet", "dirty_sched=on", "distroot=#{distroot}", "buildroot=#{buildroot}", "compile", "install"])
     Mix.Project.build_structure
   end
 
