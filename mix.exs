@@ -3,11 +3,27 @@ defmodule Mix.Tasks.Compile.ExMagick do
 
   @shortdoc "compiles the exmagick library"
   def run(_) do
-    distroot  = Path.absname (Path.expand "priv", __DIR__)
-    buildroot = Mix.Project.build_path
-    runcmd("make", ["--quiet", "distroot=#{distroot}", "buildroot=#{buildroot}", "compile", "install"])
-    runcmd("make", ["--quiet", "dirty_sched=on", "distroot=#{distroot}", "buildroot=#{buildroot}", "compile", "install"])
-    Mix.Project.build_structure
+    distroot = Path.absname(Path.expand("priv", __DIR__))
+    buildroot = Mix.Project.build_path()
+
+    runcmd("make", [
+      "--quiet",
+      "distroot=#{distroot}",
+      "buildroot=#{buildroot}",
+      "compile",
+      "install"
+    ])
+
+    runcmd("make", [
+      "--quiet",
+      "dirty_sched=on",
+      "distroot=#{distroot}",
+      "buildroot=#{buildroot}",
+      "compile",
+      "install"
+    ])
+
+    Mix.Project.build_structure()
   end
 
   defp runcmd(cmd, args) do
@@ -19,18 +35,19 @@ defmodule ExMagick.Mixfile do
   use Mix.Project
 
   def project do
-    [ app: :exmagick,
+    [
+      app: :exmagick,
       version: "0.0.5",
       elixir: "~> 1.2",
-      description: description,
-      package: package,
-      deps: deps,
-      aliases: aliases,
+      description: description(),
+      package: package(),
+      deps: deps(),
+      aliases: aliases(),
       dialyzer: [
         paths: ["_build/dev/lib/exmagick/ebin/Elixir.ExMagick.beam"],
         plt_file: System.get_env("DIALYZER_PLT") || ".dialyzer.plt"
       ],
-      compilers: [:exMagick | Mix.compilers]
+      compilers: [:exMagick | Mix.compilers()]
     ]
   end
 
@@ -63,12 +80,19 @@ defmodule ExMagick.Mixfile do
   end
 
   defp make_clean(_) do
-    File.rm_rf "priv"
-    build_dir = Path.dirname Mix.Project.build_path
-    if File.exists? build_dir do
+    File.rm_rf("priv")
+    build_dir = Path.dirname(Mix.Project.build_path())
+
+    if File.exists?(build_dir) do
       for env <- File.ls!(build_dir) do
-        buildroot = Path.join build_dir, env
-        {_, 0} = System.cmd("make", ["buildroot=#{buildroot}", "clean", "--quiet"], into: IO.stream(:stdio, :line))
+        buildroot = Path.join(build_dir, env)
+
+        {_, 0} =
+          System.cmd(
+            "make",
+            ["buildroot=#{buildroot}", "clean", "--quiet"],
+            into: IO.stream(:stdio, :line)
+          )
       end
     end
   end

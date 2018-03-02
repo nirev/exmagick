@@ -64,9 +64,9 @@ defmodule ExMagick do
   @typedoc """
   An opaque handle used by the GraphicsMagick API
   """
-  @opaque handle  :: binary
+  @opaque handle :: binary
 
-  @type exm_error :: {:error, String.t}
+  @type exm_error :: {:error, String.t()}
 
   @on_load {:load, 0}
 
@@ -75,7 +75,7 @@ defmodule ExMagick do
   def load do
     sofile =
       Path.join([:code.priv_dir(:exmagick), "lib", "libexmagick"])
-      |> String.to_charlist
+      |> String.to_charlist()
 
     :erlang.load_nif(sofile, 0)
   end
@@ -83,7 +83,7 @@ defmodule ExMagick do
   @doc """
   Refer to `attr/3`
   """
-  @spec attr!(handle, :atom, String.t | boolean) :: handle
+  @spec attr!(handle, :atom, String.t() | boolean) :: handle
   def attr!(handle, attribute, value) do
     {:ok, handle} = attr(handle, attribute, value)
     handle
@@ -98,15 +98,18 @@ defmodule ExMagick do
   * `:magick` - the image type [ex.: PNG]
   * `:density` - horizontal and vertical resolution in pixels of this image; [default: 72]
   """
-  @spec attr(handle, :atom, String.t | boolean) :: {:ok, handle} | exm_error
+  @spec attr(handle, :atom, String.t() | boolean) :: {:ok, handle} | exm_error
   def attr(handle, attribute, value) when is_atom(attribute) do
     case attribute do
       :adjoin when is_boolean(value) ->
         set_attr(handle, attribute, value)
+
       :density when is_binary(value) ->
         set_attr(handle, attribute, value)
-      :magick  when is_binary(value) ->
+
+      :magick when is_binary(value) ->
         set_attr(handle, attribute, value)
+
       _ ->
         {:error, "unknown attribute #{attribute}"}
     end
@@ -115,7 +118,7 @@ defmodule ExMagick do
   @doc """
   Refer to `attr/2`
   """
-  @spec attr!(handle, atom) :: String.t | boolean | non_neg_integer
+  @spec attr!(handle, atom) :: String.t() | boolean | non_neg_integer
   def attr!(handle, attribute) do
     {:ok, handle} = attr(handle, attribute)
     handle
@@ -129,14 +132,14 @@ defmodule ExMagick do
   * `:rows` The horizontal size in pixels of the image
   * `:columns` The vertical size in pixels of the image
   """
-  @spec attr(handle, atom) :: {:ok, String.t | boolean | non_neg_integer} | exm_error
+  @spec attr(handle, atom) :: {:ok, String.t() | boolean | non_neg_integer} | exm_error
   def attr(handle, attribute), do: get_attr(handle, attribute)
 
   @doc """
   Computes the number of pages of an image.
   """
   @spec num_pages(handle) :: {:ok, non_neg_integer} | exm_error
-  def num_pages(_handle), do: fail
+  def num_pages(_handle), do: fail()
 
   @doc """
   Refer to `num_pages/1`
@@ -161,10 +164,8 @@ defmodule ExMagick do
   """
   @spec size(handle) :: {:ok, %{width: non_neg_integer, height: non_neg_integer}} | exm_error
   def size(handle) do
-    with \
-      {:ok, width}  <- attr(handle, :columns),
-      {:ok, height} <- attr(handle, :rows)
-    do
+    with {:ok, width} <- attr(handle, :columns),
+         {:ok, height} <- attr(handle, :rows) do
       {:ok, %{width: width, height: height}}
     end
   end
@@ -182,12 +183,13 @@ defmodule ExMagick do
   Resizes the image.
   """
   @spec size(handle, non_neg_integer, non_neg_integer) :: {:ok, handle} | exm_error
-  def size(_handle, _width, _height), do: fail
+  def size(_handle, _width, _height), do: fail()
 
   @doc """
   Refer to `crop/5`.
   """
-  @spec crop!(handle, non_neg_integer, non_neg_integer, non_neg_integer, non_neg_integer) :: handle
+  @spec crop!(handle, non_neg_integer, non_neg_integer, non_neg_integer, non_neg_integer) ::
+          handle
   def crop!(handle, x, y, width, height) do
     {:ok, handle} = crop(handle, x, y, width, height)
     handle
@@ -198,8 +200,9 @@ defmodule ExMagick do
 
   * `x`, `y` refer to starting point, where (0, 0) is top left
   """
-  @spec crop(handle, non_neg_integer, non_neg_integer, non_neg_integer, non_neg_integer) :: {:ok, handle} | exm_error
-  def crop(_handle, _x, _y, _width, _height), do: fail
+  @spec crop(handle, non_neg_integer, non_neg_integer, non_neg_integer, non_neg_integer) ::
+          {:ok, handle} | exm_error
+  def crop(_handle, _x, _y, _width, _height), do: fail()
 
   @spec thumb!(handle, non_neg_integer, non_neg_integer) :: handle
   def thumb!(handle, width, height) do
@@ -214,7 +217,7 @@ defmodule ExMagick do
   concern for speed than resulting image quality._
   """
   @spec thumb(handle, non_neg_integer, non_neg_integer) :: {:ok, handle} | exm_error
-  def thumb(_handle, _width, _height), do: fail
+  def thumb(_handle, _width, _height), do: fail()
 
   @doc false
   def image! do
@@ -224,8 +227,12 @@ defmodule ExMagick do
 
   @doc false
   def image do
-    IO.puts :stderr, "warning: image is deprecated in favor of init." <> Exception.format_stacktrace
-    init
+    IO.puts(
+      :stderr,
+      "warning: image is deprecated in favor of init." <> Exception.format_stacktrace()
+    )
+
+    init()
   end
 
   @doc """
@@ -242,12 +249,12 @@ defmodule ExMagick do
 
   Image attributes may be tuned by using the `attr/3` function.
   """
-  def init, do: fail
+  def init, do: fail()
 
   @doc """
   Refer to `image_load!/2`
   """
-  @spec image_load!(handle, Path.t | {:blob, binary}) :: handle
+  @spec image_load!(handle, Path.t() | {:blob, binary}) :: handle
   def image_load!(handle, path_or_blob) do
     {:ok, handle} = image_load(handle, path_or_blob)
     handle
@@ -257,14 +264,14 @@ defmodule ExMagick do
   Loads an image into the handler. You may provide a file path or a
   tuple `{:blob, ...}` which the second argument is the blob to load.
   """
-  @spec image_load(handle, Path.t | {:blob, binary}) :: {:ok, handle} | exm_error
+  @spec image_load(handle, Path.t() | {:blob, binary}) :: {:ok, handle} | exm_error
   def image_load(handle, {:blob, blob}), do: image_load_blob(handle, blob)
   def image_load(handle, path), do: image_load_file(handle, path)
 
   @doc """
   Refer to `image_dump/2`
   """
-  @spec image_dump!(handle, Path.t) :: handle
+  @spec image_dump!(handle, Path.t()) :: handle
   def image_dump!(handle, path) do
     {:ok, handle} = image_dump(handle, path)
     handle
@@ -276,7 +283,7 @@ defmodule ExMagick do
   If the attr `:adjoin` is `false`, multiple files will be created and the
   filename is expected to have a printf-formatting sytle (ex.: `foo%0d.png`).
   """
-  @spec image_dump(handle, Path.t) :: {:ok, handle} | exm_error
+  @spec image_dump(handle, Path.t()) :: {:ok, handle} | exm_error
   def image_dump(handle, path), do: image_dump_file(handle, path)
 
   @doc """
@@ -295,26 +302,24 @@ defmodule ExMagick do
     blob
   end
 
-  @spec image_load_file(handle, Path.t) :: {:ok, handle} | exm_error
-  defp image_load_file(_handle, _path), do: fail
+  @spec image_load_file(handle, Path.t()) :: {:ok, handle} | exm_error
+  defp image_load_file(_handle, _path), do: fail()
 
   @spec image_load_blob(handle, binary) :: {:ok, handle} | exm_error
-  defp image_load_blob(_handle, _blob), do: fail
+  defp image_load_blob(_handle, _blob), do: fail()
 
-  @spec image_dump_file(handle, Path.t) :: {:ok, handle} | exm_error
-  defp image_dump_file(_handle, _path), do: fail
+  @spec image_dump_file(handle, Path.t()) :: {:ok, handle} | exm_error
+  defp image_dump_file(_handle, _path), do: fail()
 
   @spec image_dump_blob(handle) :: {:ok, binary} | exm_error
-  defp image_dump_blob(_handle), do: fail
+  defp image_dump_blob(_handle), do: fail()
 
-  @spec set_attr(handle, atom, String.t | boolean) :: {:ok, handle} | exm_error
-  defp set_attr(_handle, _attribute, _value), do: fail
+  @spec set_attr(handle, atom, String.t() | boolean) :: {:ok, handle} | exm_error
+  defp set_attr(_handle, _attribute, _value), do: fail()
 
-  @spec get_attr(handle, atom) :: {:ok, String.t | boolean | non_neg_integer} | exm_error
-  defp get_attr(_handle, _attribute), do: fail
+  @spec get_attr(handle, atom) :: {:ok, String.t() | boolean | non_neg_integer} | exm_error
+  defp get_attr(_handle, _attribute), do: fail()
 
-  @docp """
-  this is to fool dialyzer
-  """
+  # XXX: this is to fool dialyzer
   defp fail, do: ExMagick.Hidden.fail("native function error")
 end
