@@ -22,6 +22,14 @@
 #define EXM_INIT char *errmsg = NULL
 #define EXM_FAIL(j, m) do { errmsg = m; goto j; } while (0)
 
+#ifdef EXM_DIRTY_SCHED
+# define EXM_NIF_IO_BOUND ERL_NIF_DIRTY_JOB_IO_BOUND
+# define EXM_NIF_CPU_BOUND ERL_NIF_DIRTY_JOB_CPU_BOUND
+#else
+# define EXM_NIF_IO_BOUND 0
+# define EXM_NIF_CPU_BOUND 0
+#endif
+
 typedef struct {
   Image *image;
   ImageInfo *i_info;
@@ -51,17 +59,17 @@ static ERL_NIF_TERM exmagick_image_dump_blob (ErlNifEnv *env, int argc, const ER
 
 ErlNifFunc exmagick_interface[] =
 {
-  {"init", 0, exmagick_init_handle},
-  {"image_load_blob", 2, exmagick_image_load_blob},
-  {"image_load_file", 2, exmagick_image_load_file},
-  {"image_dump_file", 2, exmagick_image_dump_file},
-  {"image_dump_blob", 1, exmagick_image_dump_blob},
-  {"set_attr", 3, exmagick_set_attr},
-  {"get_attr", 2, exmagick_get_attr},
-  {"thumb", 3, exmagick_image_thumb},
-  {"size", 3, exmagick_set_size},
-  {"num_pages", 1, exmagick_num_pages},
-  {"crop", 5, exmagick_crop}
+  {"init", 0, exmagick_init_handle, 0},
+  {"image_load_blob", 2, exmagick_image_load_blob, EXM_NIF_CPU_BOUND},
+  {"image_load_file", 2, exmagick_image_load_file, EXM_NIF_CPU_BOUND},
+  {"image_dump_file", 2, exmagick_image_dump_file, EXM_NIF_IO_BOUND},
+  {"image_dump_blob", 1, exmagick_image_dump_blob, EXM_NIF_CPU_BOUND},
+  {"set_attr", 3, exmagick_set_attr, EXM_NIF_CPU_BOUND},
+  {"get_attr", 2, exmagick_get_attr, EXM_NIF_CPU_BOUND},
+  {"thumb", 3, exmagick_image_thumb, EXM_NIF_CPU_BOUND},
+  {"size", 3, exmagick_set_size, EXM_NIF_CPU_BOUND},
+  {"num_pages", 1, exmagick_num_pages, EXM_NIF_CPU_BOUND},
+  {"crop", 5, exmagick_crop, EXM_NIF_CPU_BOUND}
 };
 
 ERL_NIF_INIT(Elixir.ExMagick, exmagick_interface, exmagick_load, NULL, NULL, exmagick_unload)

@@ -22,18 +22,28 @@ exmagick_cflags  = -pedantic -ansi -I$(erlang_flags) $(gm_cflags)
 exmagick_ldflags = $(gm_ldflags) -rpath $(exmagick_rpath) -L/usr/local/lib
 exmagick_ld_libs = $(gm_libs)
 
-srcfiles = $(wildcard lib/c/*.c)
-objfiles = $(addprefix $(buildroot)/, $(addsuffix .lo, $(basename $(srcfiles))))
+srcfiles    = $(wildcard lib/c/*.c)
+objfiles_d  = $(addprefix $(buildroot)/, $(addsuffix _d.lo, $(basename $(srcfiles))))
+objfiles_nd = $(addprefix $(buildroot)/, $(addsuffix _nd.lo, $(basename $(srcfiles))))
 
-libname  = libexmagick
 libfile  = $(buildroot)/$(libname).la
+
+ifdef dirty_sched
+libname  = libexmagick_d
+objfiles = $(objfiles_d)
+else
+libname  = libexmagick_nd
+objfiles = $(objfiles_nd)
+endif
 
 build: $(libfile)
 compile: build
 
 clean:
-	$(bin_libtool) --mode=clean rm -f $(objfiles)
-	$(bin_libtool) --mode=clean rm -f $(libfile)
+	$(bin_libtool) --mode=clean rm -f $(objfiles_d)
+	$(bin_libtool) --mode=clean rm -f $(objfiles_nd)
+	$(bin_libtool) --mode=clean rm -f $(libfile_d)
+	$(bin_libtool) --mode=clean rm -f $(libfile_nd)
 
 install: $(distroot)/lib/$(libname).la
 
@@ -46,7 +56,11 @@ $(distroot)/lib/$(libname).la: $(libfile)
 	  then ln -s $(libname).dylib $(@D)/$(libname).so; fi;\
 	fi
 
-$(buildroot)/%.lo: %.c
+$(buildroot)/%_d.lo: %.c
+	test -d $(@D) || mkdir -p $(@D)
+	$(bin_libtool) --tag=CC --mode=compile $(CC) -DEXM_DIRTY_SCHED $(CFLAGS) $(exmagick_cflags) -c $(<) -o $(@)
+
+$(buildroot)/%_nd.lo: %.c
 	test -d $(@D) || mkdir -p $(@D)
 	$(bin_libtool) --tag=CC --mode=compile $(CC) $(CFLAGS) $(exmagick_cflags) -c $(<) -o $(@)
 
