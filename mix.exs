@@ -37,7 +37,7 @@ defmodule ExMagick.Mixfile do
   def project do
     [
       app: :exmagick,
-      version: "0.0.5",
+      version: "1.0.0",
       elixir: "~> 1.2",
       description: description(),
       package: package(),
