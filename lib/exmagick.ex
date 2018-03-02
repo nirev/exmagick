@@ -13,7 +13,8 @@
 
 defmodule ExMagick do
   @moduledoc """
-  NIF bindings to the GraphicsMagick API.
+  NIF bindings to the GraphicsMagick API with optional support for
+  dirty scheduling.
 
   ## Examples
 
@@ -73,11 +74,17 @@ defmodule ExMagick do
   @doc false
   @spec load :: :ok | {:error, {atom, charlist}}
   def load do
-    sofile =
-      Path.join([:code.priv_dir(:exmagick), "lib", "libexmagick"])
+    nd_file =
+      Path.join([:code.priv_dir(:exmagick), "lib/libexmagick_nd"])
       |> String.to_charlist()
 
-    :erlang.load_nif(sofile, 0)
+    d_file =
+      Path.join([:code.priv_dir(:exmagick), "lib/libexmagick_d"])
+      |> String.to_charlist()
+
+    with {:error, {:notsup, _}} <- :erlang.load_nif(d_file, 0) do
+      :erlang.load_nif(nd_file, 0)
+    end
   end
 
   @doc """
