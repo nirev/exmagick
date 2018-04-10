@@ -531,9 +531,11 @@ ehandler:
 static
 ERL_NIF_TERM exmagick_image_dump_blob (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
-  void *blob;
+  void *blob_image = NULL;
   size_t size;
   exm_resource_t *resource;
+  ERL_NIF_TERM blob_term;
+  unsigned char *blob_raw;
 
   EXM_INIT;
   ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
@@ -541,16 +543,23 @@ ERL_NIF_TERM exmagick_image_dump_blob (ErlNifEnv *env, int argc, const ERL_NIF_T
   if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
   { EXM_FAIL(ehandler, "invalid handle"); }
 
-  blob = ImageToBlob(resource->i_info, resource->image, &size, &resource->e_info);
-  if (NULL == blob)
+  blob_image = ImageToBlob(resource->i_info, resource->image, &size, &resource->e_info);
+  if (NULL == blob_image)
   {
     CatchException(&resource->e_info);
     EXM_FAIL(ehandler, resource->e_info.reason);
   }
 
-  return(enif_make_tuple2(env,
-                          enif_make_atom(env, "ok"),
-                          enif_make_resource_binary(env, resource, blob, size)));
+  blob_raw = enif_make_new_binary(env, size, &blob_term);
+  if (NULL == blob_raw)
+  { EXM_FAIL(ehandler, "enif_make_new_binary error"); }
+
+  memcpy(blob_raw, blob_image, size);
+  MagickFree(blob_image);
+
+  return(enif_make_tuple2(env, enif_make_atom(env, "ok"), blob_term));
 ehandler:
+  if (NULL != blob_image)
+  { MagickFree(blob_image); }
   return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
 }
