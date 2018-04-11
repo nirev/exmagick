@@ -1,3 +1,5 @@
+exm_dirty_sched ?= no
+
 uname_s         := $(shell sh -c 'uname -s 2>/dev/null || echo undefined')
 
 distroot        ?= $(CURDIR)/priv
@@ -16,7 +18,11 @@ gm_libs               := $(shell $(bin_gmconfig) --libs)
 gm_cflags             := $(shell $(bin_gmconfig) --cflags --cppflags)
 gm_ldflags            := $(shell $(bin_gmconfig) --ldflags)
 erl_cflags            := -I$(shell $(bin_elixir) $(CURDIR)/bin/erlang_include_dir.exs)
+ifeq ($(exm_dirty_sched),no)
+erl_dirty_sched_flags := -DEXM_NO_DIRTY_SCHED
+else
 erl_dirty_sched_flags := $(shell env CC=$(CC) CFLAGS=$(erl_cflags) $(CURDIR)/bin/check_dirty_sched.sh || echo -DEXM_NO_DIRTY_SCHED)
+endif
 
 exmagick_rpath  := $(shell $(CURDIR)/bin/rpath.sh $(gm_ldflags))
 exmagick_cflags  = -pedantic -ansi $(erl_cflags) $(gm_cflags) $(erl_dirty_sched_flags)
