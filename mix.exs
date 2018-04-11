@@ -14,15 +14,6 @@ defmodule Mix.Tasks.Compile.ExMagick do
       "install"
     ])
 
-    runcmd("make", [
-      "--quiet",
-      "dirty_sched=on",
-      "distroot=#{distroot}",
-      "buildroot=#{buildroot}",
-      "compile",
-      "install"
-    ])
-
     Mix.Project.build_structure()
   end
 
