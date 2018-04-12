@@ -1,5 +1,12 @@
 -*- mode: text -*-
 
+v0.0.6
+  * add optional dirty scheduler support;
+  * bugfix: memory leak on `image_dump/1`
+
+v0.0.5
+  * add num_pages
+
 v0.0.4
   * dump and load using binaries
   * magick attribute is read-write

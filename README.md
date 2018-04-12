@@ -47,6 +47,20 @@ If you have all dependencies satisfied then the following should pass:
 $ mix test
 ```
 
+DIRTY SCHEDULER
+---------------
+
+The library has support for using dirty scheduler but it is disabled
+by default. To enable it, define an environment variable before
+compiling:
+
+```
+$ env exm_dirty_sched=auto mix compile
+```
+
+It will enable dirty scheduler support when the machine provides
+support for it.
+
 LINKS
 -----
 

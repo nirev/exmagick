@@ -74,17 +74,10 @@ defmodule ExMagick do
   @doc false
   @spec load :: :ok | {:error, {atom, charlist}}
   def load do
-    nd_file =
-      Path.join([:code.priv_dir(:exmagick), "lib/libexmagick_nd"])
-      |> String.to_charlist()
-
-    d_file =
-      Path.join([:code.priv_dir(:exmagick), "lib/libexmagick_d"])
-      |> String.to_charlist()
-
-    with {:error, {:notsup, _}} <- :erlang.load_nif(d_file, 0) do
-      :erlang.load_nif(nd_file, 0)
-    end
+    [:code.priv_dir(:exmagick), "lib/libexmagick"]
+    |> Path.join()
+    |> String.to_charlist()
+    |> :erlang.load_nif(0)
   end
 
   @doc """

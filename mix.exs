@@ -14,15 +14,6 @@ defmodule Mix.Tasks.Compile.ExMagick do
       "install"
     ])
 
-    runcmd("make", [
-      "--quiet",
-      "dirty_sched=on",
-      "distroot=#{distroot}",
-      "buildroot=#{buildroot}",
-      "compile",
-      "install"
-    ])
-
     Mix.Project.build_structure()
   end
 
@@ -38,7 +29,7 @@ defmodule ExMagick.Mixfile do
     [
       app: :exmagick,
       version: "1.0.0",
-      elixir: "~> 1.2",
+      elixir: "~> 1.3",
       description: description(),
       package: package(),
       deps: deps(),

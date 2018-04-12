@@ -22,14 +22,6 @@
 #define EXM_INIT char *errmsg = NULL
 #define EXM_FAIL(j, m) do { errmsg = m; goto j; } while (0)
 
-#ifdef EXM_DIRTY_SCHED
-# define EXM_NIF_IO_BOUND ERL_NIF_DIRTY_JOB_IO_BOUND
-# define EXM_NIF_CPU_BOUND ERL_NIF_DIRTY_JOB_CPU_BOUND
-#else
-# define EXM_NIF_IO_BOUND 0
-# define EXM_NIF_CPU_BOUND 0
-#endif
-
 typedef struct {
   Image *image;
   ImageInfo *i_info;
@@ -57,20 +49,37 @@ static ERL_NIF_TERM exmagick_image_load_blob (ErlNifEnv *env, int argc, const ER
 static ERL_NIF_TERM exmagick_image_dump_file (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_image_dump_blob (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
+#ifdef EXM_NO_DIRTY_SCHED
+ErlNifFunc exmagick_interface[] =
+{
+  {"init", 0, exmagick_init_handle},
+  {"image_load_blob", 2, exmagick_image_load_blob},
+  {"image_load_file", 2, exmagick_image_load_file},
+  {"image_dump_file", 2, exmagick_image_dump_file},
+  {"image_dump_blob", 1, exmagick_image_dump_blob},
+  {"set_attr", 3, exmagick_set_attr},
+  {"get_attr", 2, exmagick_get_attr},
+  {"thumb", 3, exmagick_image_thumb},
+  {"size", 3, exmagick_set_size},
+  {"num_pages", 1, exmagick_num_pages},
+  {"crop", 5, exmagick_crop}
+};
+#else
 ErlNifFunc exmagick_interface[] =
 {
   {"init", 0, exmagick_init_handle, 0},
-  {"image_load_blob", 2, exmagick_image_load_blob, EXM_NIF_CPU_BOUND},
-  {"image_load_file", 2, exmagick_image_load_file, EXM_NIF_CPU_BOUND},
-  {"image_dump_file", 2, exmagick_image_dump_file, EXM_NIF_IO_BOUND},
-  {"image_dump_blob", 1, exmagick_image_dump_blob, EXM_NIF_CPU_BOUND},
-  {"set_attr", 3, exmagick_set_attr, EXM_NIF_CPU_BOUND},
-  {"get_attr", 2, exmagick_get_attr, EXM_NIF_CPU_BOUND},
-  {"thumb", 3, exmagick_image_thumb, EXM_NIF_CPU_BOUND},
-  {"size", 3, exmagick_set_size, EXM_NIF_CPU_BOUND},
-  {"num_pages", 1, exmagick_num_pages, EXM_NIF_CPU_BOUND},
-  {"crop", 5, exmagick_crop, EXM_NIF_CPU_BOUND}
+  {"image_load_blob", 2, exmagick_image_load_blob, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+  {"image_load_file", 2, exmagick_image_load_file, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+  {"image_dump_file", 2, exmagick_image_dump_file, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+  {"image_dump_blob", 1, exmagick_image_dump_blob, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+  {"set_attr", 3, exmagick_set_attr, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+  {"get_attr", 2, exmagick_get_attr, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+  {"thumb", 3, exmagick_image_thumb, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+  {"size", 3, exmagick_set_size, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+  {"num_pages", 1, exmagick_num_pages, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+  {"crop", 5, exmagick_crop, ERL_NIF_DIRTY_JOB_CPU_BOUND}
 };
+#endif
 
 ERL_NIF_INIT(Elixir.ExMagick, exmagick_interface, exmagick_load, NULL, NULL, exmagick_unload)
 
@@ -531,9 +540,11 @@ ehandler:
 static
 ERL_NIF_TERM exmagick_image_dump_blob (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
-  void *blob;
+  void *blob_image = NULL;
   size_t size;
   exm_resource_t *resource;
+  ERL_NIF_TERM blob_term;
+  unsigned char *blob_raw;
 
   EXM_INIT;
   ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
@@ -541,16 +552,23 @@ ERL_NIF_TERM exmagick_image_dump_blob (ErlNifEnv *env, int argc, const ERL_NIF_T
   if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
   { EXM_FAIL(ehandler, "invalid handle"); }
 
-  blob = ImageToBlob(resource->i_info, resource->image, &size, &resource->e_info);
-  if (NULL == blob)
+  blob_image = ImageToBlob(resource->i_info, resource->image, &size, &resource->e_info);
+  if (NULL == blob_image)
   {
     CatchException(&resource->e_info);
     EXM_FAIL(ehandler, resource->e_info.reason);
   }
 
-  return(enif_make_tuple2(env,
-                          enif_make_atom(env, "ok"),
-                          enif_make_resource_binary(env, resource, blob, size)));
+  blob_raw = enif_make_new_binary(env, size, &blob_term);
+  if (NULL == blob_raw)
+  { EXM_FAIL(ehandler, "enif_make_new_binary error"); }
+
+  memcpy(blob_raw, blob_image, size);
+  MagickFree(blob_image);
+
+  return(enif_make_tuple2(env, enif_make_atom(env, "ok"), blob_term));
 ehandler:
+  if (NULL != blob_image)
+  { MagickFree(blob_image); }
   return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
 }
