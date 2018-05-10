@@ -48,6 +48,7 @@ static ERL_NIF_TERM exmagick_image_load_file (ErlNifEnv *env, int argc, const ER
 static ERL_NIF_TERM exmagick_image_load_blob (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_image_dump_file (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM exmagick_image_dump_blob (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM exmagick_convert         (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
 #ifdef EXM_NO_DIRTY_SCHED
 ErlNifFunc exmagick_interface[] =
@@ -62,7 +63,8 @@ ErlNifFunc exmagick_interface[] =
   {"thumb", 3, exmagick_image_thumb},
   {"size", 3, exmagick_set_size},
   {"num_pages", 1, exmagick_num_pages},
-  {"crop", 5, exmagick_crop}
+  {"crop", 5, exmagick_crop},
+  {"convert", 3, exmagick_convert}
 };
 #else
 ErlNifFunc exmagick_interface[] =
@@ -77,7 +79,8 @@ ErlNifFunc exmagick_interface[] =
   {"thumb", 3, exmagick_image_thumb, ERL_NIF_DIRTY_JOB_CPU_BOUND},
   {"size", 3, exmagick_set_size, ERL_NIF_DIRTY_JOB_CPU_BOUND},
   {"num_pages", 1, exmagick_num_pages, ERL_NIF_DIRTY_JOB_CPU_BOUND},
-  {"crop", 5, exmagick_crop, ERL_NIF_DIRTY_JOB_CPU_BOUND}
+  {"crop", 5, exmagick_crop, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+  {"convert", 3, exmagick_convert, ERL_NIF_DIRTY_JOB_CPU_BOUND}
 };
 #endif
 
@@ -113,6 +116,17 @@ int exmagick_get_boolean_u (ErlNifEnv *env, ERL_NIF_TERM arg, unsigned int *p)
     else
     { ecode = 0; }
   }
+
+  return(ecode);
+}
+
+static
+int exmagick_get_double (ErlNifEnv *env, ERL_NIF_TERM arg, double *dbl)
+{
+  int ecode;
+  char atom[EXM_MAX_ATOM_SIZE];
+
+  ecode = enif_get_double(env, arg, dbl);
 
   return(ecode);
 }
@@ -570,5 +584,50 @@ ERL_NIF_TERM exmagick_image_dump_blob (ErlNifEnv *env, int argc, const ERL_NIF_T
 ehandler:
   if (NULL != blob_image)
   { MagickFree(blob_image); }
+  return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
+}
+
+static
+ERL_NIF_TERM exmagick_convert (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+  ErlNifBinary utf8;
+  char atom[EXM_MAX_ATOM_SIZE];
+  exm_resource_t *resource;
+
+  EXM_INIT;
+  ErlNifResourceType *type = (ErlNifResourceType *) enif_priv_data(env);
+
+  if (0 == enif_get_resource(env, argv[0], type, (void **) &resource))
+  { EXM_FAIL(ehandler, "invalid handle"); }
+  if (0 == enif_get_atom(env, argv[1], atom, EXM_MAX_ATOM_SIZE, ERL_NIF_LATIN1))
+  { EXM_FAIL(ehandler, "argv[1]: bad argument"); }
+
+  if (strcmp("black_threshold_image", atom) == 0)
+  {
+    char str_value[MaxTextExtent];
+
+    if (0 == exmagick_get_utf8str(env, argv[2], &utf8))
+    { EXM_FAIL(ehandler, "argv[2]: bad argument"); }
+
+    exmagick_utf8strcpy(str_value, &utf8, MaxTextExtent);
+
+    if (0 == BlackThresholdImage(resource->image, &str_value))
+    { EXM_FAIL(ehandler, "failed to apply BlackThresholdImage"); }
+  }
+
+  if (strcmp("threshold_image", atom) == 0)
+  {
+    double dbl_value;
+
+    if (0 == exmagick_get_double(env, argv[2], &dbl_value))
+    { EXM_FAIL(ehandler, "argv[2]: bad argument"); }
+
+    if (0 == ThresholdImage(resource->image, dbl_value))
+    { EXM_FAIL(ehandler, "failed to apply ThresholdImage"); }
+  }
+
+  return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
+
+ehandler:
   return(enif_make_tuple2(env, enif_make_atom(env, "error"), exmagick_make_utf8str(env, errmsg)));
 }

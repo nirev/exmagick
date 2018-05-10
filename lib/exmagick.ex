@@ -320,6 +320,22 @@ defmodule ExMagick do
   @spec get_attr(handle, atom) :: {:ok, String.t() | boolean | non_neg_integer} | exm_error
   defp get_attr(_handle, _attribute), do: fail()
 
+  @doc """
+  Applies operations on the image.
+
+  Currently, supported options are:
+
+  - `black_threshold_image`
+  - `threshold_image`
+  """
+  @spec convert(handle, atom, String.t()) :: {:ok, handle} | exm_error
+  def convert(_handle, _option, _value), do: fail()
+
+  def convert!(handle, option, value) do
+    {:ok, handle} = convert(handle, option, value)
+    handle
+  end
+
   # XXX: this is to fool dialyzer
   defp fail, do: ExMagick.Hidden.fail("native function error")
 end
