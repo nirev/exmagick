@@ -124,7 +124,6 @@ static
 int exmagick_get_double (ErlNifEnv *env, ERL_NIF_TERM arg, double *dbl)
 {
   int ecode;
-  char atom[EXM_MAX_ATOM_SIZE];
 
   ecode = enif_get_double(env, arg, dbl);
 
