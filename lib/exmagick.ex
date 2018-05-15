@@ -325,8 +325,23 @@ defmodule ExMagick do
 
   Currently, supported options are:
 
-  - `black_threshold_image`
   - `threshold_image`
+  - `black_threshold_image`
+  - `white_threshold_image`
+
+  ## Examples
+
+      ExMagick.init!()
+      |> ExMagick.image_load!(Path.join(__DIR__, "../test/images/elixir.png"))
+      |> ExMagick.convert(:threshold_image, 0.8)
+
+      ExMagick.init!()
+      |> ExMagick.image_load!(Path.join(__DIR__, "../test/images/elixir.png"))
+      |> ExMagick.convert(:black_threshold_image, "100%,100%,100%")
+
+      ExMagick.init!()
+      |> ExMagick.image_load!(Path.join(__DIR__, "../test/images/elixir.png"))
+      |> ExMagick.convert(:white_threshold_image, "25%")
   """
   @spec convert(handle, atom, String.t()) :: {:ok, handle} | exm_error
   def convert(_handle, _option, _value), do: fail()
