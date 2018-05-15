@@ -233,6 +233,14 @@ defmodule ExMagickTest do
   end
 
   describe "convert/3" do
+    test "treshold_image", context do
+      src = Path.join(context[:images], "elixir.png")
+
+      assert {:ok, _} = ExMagick.init!()
+      |> ExMagick.image_load!(src)
+      |> ExMagick.convert(:threshold_image, 0.8)
+    end
+
     test "black_threshold_image", context do
       src = Path.join(context[:images], "elixir.png")
 
@@ -241,12 +249,12 @@ defmodule ExMagickTest do
       |> ExMagick.convert(:black_threshold_image, "100%,100%,100%")
     end
 
-    test "treshold_image", context do
+    test "white_threshold_image", context do
       src = Path.join(context[:images], "elixir.png")
 
       assert {:ok, _} = ExMagick.init!()
       |> ExMagick.image_load!(src)
-      |> ExMagick.convert(:threshold_image, 0.8)
+      |> ExMagick.convert(:white_threshold_image, "25%")
     end
   end
 end

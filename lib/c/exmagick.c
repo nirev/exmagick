@@ -626,6 +626,19 @@ ERL_NIF_TERM exmagick_convert (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv
     { EXM_FAIL(ehandler, "failed to apply ThresholdImage"); }
   }
 
+  if (strcmp("white_threshold_image", atom) == 0)
+  {
+    char str_value[MaxTextExtent];
+ 
+    if (0 == exmagick_get_utf8str(env, argv[2], &utf8))
+    { EXM_FAIL(ehandler, "argv[2]: bad argument"); }
+
+    exmagick_utf8strcpy(str_value, &utf8, MaxTextExtent);
+
+    if (0 == WhiteThresholdImage(resource->image, &str_value))
+    { EXM_FAIL(ehandler, "failed to apply WhiteThresholdImage"); }
+  }
+
   return(enif_make_tuple2(env, enif_make_atom(env, "ok"), argv[0]));
 
 ehandler:
