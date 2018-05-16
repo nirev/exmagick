@@ -333,7 +333,7 @@ defmodule ExMagick do
 
       ExMagick.init!()
       |> ExMagick.image_load!(Path.join(__DIR__, "../test/images/elixir.png"))
-      |> ExMagick.convert(:threshold_image, 0.8)
+      |> ExMagick.convert(:threshold_image, 12.7)
 
       ExMagick.init!()
       |> ExMagick.image_load!(Path.join(__DIR__, "../test/images/elixir.png"))

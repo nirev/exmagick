@@ -233,7 +233,7 @@ defmodule ExMagickTest do
   end
 
   describe "convert/3" do
-    test "treshold_image", context do
+    test "threshold_image", context do
       src = Path.join(context[:images], "elixir.png")
 
       assert {:ok, _} = ExMagick.init!()
