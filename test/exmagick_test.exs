@@ -231,4 +231,30 @@ defmodule ExMagickTest do
 
     assert 1 == num_pages
   end
+
+  describe "convert/3" do
+    test "threshold_image", context do
+      src = Path.join(context[:images], "elixir.png")
+
+      assert {:ok, _} = ExMagick.init!()
+      |> ExMagick.image_load!(src)
+      |> ExMagick.convert(:threshold_image, 0.8)
+    end
+
+    test "black_threshold_image", context do
+      src = Path.join(context[:images], "elixir.png")
+
+      assert {:ok, _} = ExMagick.init!()
+      |> ExMagick.image_load!(src)
+      |> ExMagick.convert(:black_threshold_image, "100%,100%,100%")
+    end
+
+    test "white_threshold_image", context do
+      src = Path.join(context[:images], "elixir.png")
+
+      assert {:ok, _} = ExMagick.init!()
+      |> ExMagick.image_load!(src)
+      |> ExMagick.convert(:white_threshold_image, "25%")
+    end
+  end
 end

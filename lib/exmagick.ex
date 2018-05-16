@@ -320,6 +320,37 @@ defmodule ExMagick do
   @spec get_attr(handle, atom) :: {:ok, String.t() | boolean | non_neg_integer} | exm_error
   defp get_attr(_handle, _attribute), do: fail()
 
+  @doc """
+  Applies operations on the image.
+
+  Currently, supported options are:
+
+  - `threshold_image`
+  - `black_threshold_image`
+  - `white_threshold_image`
+
+  ## Examples
+
+      ExMagick.init!()
+      |> ExMagick.image_load!(Path.join(__DIR__, "../test/images/elixir.png"))
+      |> ExMagick.convert(:threshold_image, 12.7)
+
+      ExMagick.init!()
+      |> ExMagick.image_load!(Path.join(__DIR__, "../test/images/elixir.png"))
+      |> ExMagick.convert(:black_threshold_image, "100%,100%,100%")
+
+      ExMagick.init!()
+      |> ExMagick.image_load!(Path.join(__DIR__, "../test/images/elixir.png"))
+      |> ExMagick.convert(:white_threshold_image, "25%")
+  """
+  @spec convert(handle, atom, String.t()) :: {:ok, handle} | exm_error
+  def convert(_handle, _option, _value), do: fail()
+
+  def convert!(handle, option, value) do
+    {:ok, handle} = convert(handle, option, value)
+    handle
+  end
+
   # XXX: this is to fool dialyzer
   defp fail, do: ExMagick.Hidden.fail("native function error")
 end
