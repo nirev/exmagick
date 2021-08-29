@@ -25,14 +25,18 @@ end
 defmodule ExMagick.Mixfile do
   use Mix.Project
 
+  @source_url "https://github.com/Xerpa/exmagick"
+  @version "1.0.0"
+
   def project do
     [
       app: :exmagick,
-      version: "1.0.0",
+      name: "ExMagick",
+      version: @version,
       elixir: "~> 1.3",
-      description: description(),
       package: package(),
       deps: deps(),
+      docs: docs(),
       aliases: aliases(),
       dialyzer: [
         paths: ["_build/dev/lib/exmagick/ebin/Elixir.ExMagick.beam"],
@@ -42,27 +46,48 @@ defmodule ExMagick.Mixfile do
     ]
   end
 
-  defp description do
-    """
-    ExMagick is a library for manipulating images interfacing with GraphicsMagick.
-    It's implemented using Erlang NIFs (Native Implemented Functions).
-    """
-  end
-
   defp package do
     [
+      description:
+        "ExMagick is a library for manipulating images interfacing " <>
+          "with GraphicsMagick. It's implemented using Erlang NIFs " <>
+          "(Native Implemented Functions).",
       maintainers: ["Guilherme nirev", "Diego Dsouza", "Renan Milhouse"],
-      licenses: ["BSD-3"],
-      links: %{"GitHub" => "https://github.com/Xerpa/exmagick"},
-      files: ["AUTHOR", "bin", "COPYING", "lib", "makefile", "mix.exs", "README.md"]
+      licenses: ["BSD-3-Clause"],
+      files: [
+        "AUTHOR",
+        "bin",
+        "lib",
+        "makefile",
+        "mix.exs",
+        "README.md",
+        "CHANGELOG.md",
+        "LICENSE.md"
+      ],
+      links: %{
+        "Changelog" => "https://hexdocs.pm/exmagick/changelog.html",
+        "GitHub" => @source_url
+      }
     ]
   end
 
   defp deps do
     [
       {:dialyxir, "~> 0.3.5", only: [:dev]},
-      {:earmark, "~> 0.1", only: :dev},
-      {:ex_doc, "~> 0.11", only: :dev}
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
+    ]
+  end
+
+  defp docs do
+    [
+      extras: [
+        "CHANGELOG.md": [],
+        "LICENSE.md": [title: "License"],
+        "README.md": [title: "Overview"]
+      ],
+      main: "readme",
+      source_url: @source_url,
+      formatters: ["html"]
     ]
   end
 
