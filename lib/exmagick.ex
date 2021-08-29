@@ -281,7 +281,7 @@ defmodule ExMagick do
   Saves an image to one or multiple files.
 
   If the attr `:adjoin` is `false`, multiple files will be created and the
-  filename is expected to have a printf-formatting sytle (ex.: `foo%0d.png`).
+  filename is expected to have a printf-formatting style (ex.: `foo%0d.png`).
   """
   @spec image_dump(handle, Path.t()) :: {:ok, handle} | exm_error
   def image_dump(handle, path), do: image_dump_file(handle, path)
