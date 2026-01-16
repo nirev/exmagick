@@ -60,9 +60,9 @@ defmodule ExMagick.Mixfile do
 
   defp deps do
     [
-      {:dialyxir, "~> 0.3.5", only: [:dev]},
-      {:earmark, "~> 0.1", only: :dev},
-      {:ex_doc, "~> 0.11", only: :dev}
+      {:dialyxir, "~> 1.4.7", only: :dev},
+      {:earmark, "~> 1.4.48", only: :dev},
+      {:ex_doc, "~> 0.39", only: :dev}
     ]
   end
 
