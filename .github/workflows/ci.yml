@@ -9,44 +9,57 @@ on:
 jobs:
   test:
     name: Test (Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        # We focus on the version you are currently using
-        elixir: ['1.15.8']
-        otp: ['25.3']
+        include:
+          - elixir: '1.15.8'
+            otp: '25.3'
+          - elixir: '1.16.3'
+            otp: '26.2'
+          - elixir: '1.17.3'
+            otp: '27.3'
+          # has compilation warnings and we need to check
+          #- elixir: '1.18.4'
+          #  otp: '28.3'
+          #- elixir: '1.19.5'
+          #  otp: '28.3'
 
     env:
-      # In Travis you toggled this. For modern OTP, 'auto' is usually best.
       exm_dirty_sched: auto
       MIX_ENV: test
 
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Translate Travis 'addons' to apt-get
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libtool-bin build-essential autoconf automake
-          sudo apt-get install -y ghostscript libgraphicsmagick1-dev
+          sudo apt-get install -y libtool-bin build-essential autoconf automake ghostscript libgraphicsmagick1-dev wget
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "aarch64" ]; then
+            echo "Detected ARM64 architecture"
+            wget http://ports.ubuntu.com/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_arm64.deb
+            sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_arm64.deb
+          else
+            echo "Detected AMD64/x86_64 architecture"
+            wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+            sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+          fi
 
       - name: Act Workaround # https://github.com/nektos/act/issues/973
         if: ${{ env.ACT }}
         run: curl -fsSL https://deb.nodesource.com/setup_22.x | bash && apt install -y nodejs
 
-      # 2. Setup Elixir & OTP
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
           elixir-version: ${{ matrix.elixir }}
           otp-version: ${{ matrix.otp }}
-          # 'strict' ensures we get the exact version match
           version-type: strict
 
-      # 3. Cache dependencies and build artifacts to speed up future runs
       - name: Restore Cache
         uses: actions/cache@v3
         with:
