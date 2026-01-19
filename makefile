@@ -27,6 +27,9 @@ endif
 exmagick_rpath  := $(shell $(CURDIR)/bin/rpath.sh $(gm_ldflags))
 exmagick_cflags  = -pedantic -ansi $(erl_cflags) $(gm_cflags) $(erl_dirty_sched_flags)
 exmagick_ldflags = $(gm_ldflags) -rpath $(exmagick_rpath) -L/usr/local/lib
+ifeq ($(uname_s),Darwin)
+exmagick_ldflags += -L/opt/homebrew/lib
+endif
 exmagick_ld_libs = $(gm_libs)
 
 srcfiles  = $(wildcard lib/c/*.c)

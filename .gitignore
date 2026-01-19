@@ -8,3 +8,4 @@ _build/
 /deps/
 /doc/
 .dialyzer.plt
+settings.local.json
