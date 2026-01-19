@@ -28,7 +28,7 @@ defmodule ExMagick.Mixfile do
   def project do
     [
       app: :exmagick,
-      version: "1.0.0",
+      version: "1.1.0",
       elixir: "~> 1.3",
       description: description(),
       package: package(),
@@ -36,7 +36,6 @@ defmodule ExMagick.Mixfile do
       aliases: aliases(),
       dialyzer: [
         paths: ["_build/dev/lib/exmagick/ebin/Elixir.ExMagick.beam"],
-        plt_file: System.get_env("DIALYZER_PLT") || ".dialyzer.plt"
       ],
       compilers: [:exMagick | Mix.compilers()]
     ]

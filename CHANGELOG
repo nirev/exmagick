@@ -1,5 +1,17 @@
 -*- mode: text -*-
 
+v1.1.0
+  * 51660d7 - Updates doc
+| * df219c3 - Remove unused atom
+| * edcd142 - WhiteThresholdImage implementation
+| * 04760a7 - Exposes some `gm convert` functionalities
+| * 234e845 - add tests compiling with exm_dirty_sched=auto
+| * 06dafb0 - bump elixir min version to 1.3
+| * 4cc6218 - dirty scheduler is disabled by default
+| * fae70c7 - check dirty_scheduler support before compiling
+| * b9162a1 - bugfix: memory leak in ImageToBlob
+| * 3843697 - try to load nd_file first; fallback to d_file on error
+
 v0.0.6
   * add optional dirty scheduler support;
   * bugfix: memory leak on `image_dump/1`
