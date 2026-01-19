@@ -610,7 +610,7 @@ ERL_NIF_TERM exmagick_convert (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv
 
     exmagick_utf8strcpy(str_value, &utf8, MaxTextExtent);
 
-    if (0 == BlackThresholdImage(resource->image, &str_value))
+    if (0 == BlackThresholdImage(resource->image, str_value))
     { EXM_FAIL(ehandler, "failed to apply BlackThresholdImage"); }
   }
 
@@ -634,7 +634,7 @@ ERL_NIF_TERM exmagick_convert (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv
 
     exmagick_utf8strcpy(str_value, &utf8, MaxTextExtent);
 
-    if (0 == WhiteThresholdImage(resource->image, &str_value))
+    if (0 == WhiteThresholdImage(resource->image, str_value))
     { EXM_FAIL(ehandler, "failed to apply WhiteThresholdImage"); }
   }
 
