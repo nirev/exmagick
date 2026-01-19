@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  test:
+    name: Test (Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elixir: '1.15.8'
+            otp: '25.3'
+          - elixir: '1.16.3'
+            otp: '26.2'
+          - elixir: '1.17.3'
+            otp: '27.3'
+          # has compilation warnings and we need to check
+          #- elixir: '1.18.4'
+          #  otp: '28.3'
+          #- elixir: '1.19.5'
+          #  otp: '28.3'
+
+    env:
+      exm_dirty_sched: auto
+      MIX_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libtool-bin build-essential autoconf automake ghostscript libgraphicsmagick1-dev wget
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "aarch64" ]; then
+            echo "Detected ARM64 architecture"
+            wget http://ports.ubuntu.com/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_arm64.deb
+            sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_arm64.deb
+          else
+            echo "Detected AMD64/x86_64 architecture"
+            wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+            sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+          fi
+
+      - name: Act Workaround # https://github.com/nektos/act/issues/973
+        if: ${{ env.ACT }}
+        run: curl -fsSL https://deb.nodesource.com/setup_22.x | bash && apt install -y nodejs
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+          version-type: strict
+
+      - name: Restore Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-${{ matrix.otp }}-${{ matrix.elixir }}-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Compile
+        run: mix compile --warnings-as-errors
+
+      - name: Run Tests
+        run: mix test

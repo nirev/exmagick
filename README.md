@@ -1,6 +1,8 @@
 ExMagick
 ========
 
+[![CI](https://github.com/nirev/exmagick/actions/workflows/ci.yml/badge.svg)](https://github.com/nirev/exmagick/actions/workflows/ci.yml)
+
 USAGE
 -----
 
@@ -22,20 +24,20 @@ DEPENDENCIES
 #### Example: Arch Linux ####
 
 ```bash
-$ pacman -S gcc make libtool graphicsmagick
+pacman -S gcc make libtool graphicsmagick
 ```
 
 #### Example: Debian ####
 
 ```bash
-$ apt-get install gcc make libtool-bin libgraphicsmagick1-dev
+apt-get install gcc make libtool-bin libgraphicsmagick1-dev
 ```
 
 OSX:
 
 ```bash
-$ brew install libtool
-$ brew install graphicsmagick
+brew install libtool
+brew install graphicsmagick
 ```
 
 INSTALLING
@@ -44,7 +46,7 @@ INSTALLING
 If you have all dependencies satisfied then the following should pass:
 
 ```
-$ mix test
+mix test
 ```
 
 DIRTY SCHEDULER
@@ -55,7 +57,7 @@ by default. To enable it, define an environment variable before
 compiling:
 
 ```
-$ env exm_dirty_sched=auto mix compile
+env exm_dirty_sched=auto mix compile
 ```
 
 It will enable dirty scheduler support when the machine provides
@@ -64,7 +66,7 @@ support for it.
 LINKS
 -----
 
-* http://www.graphicsmagick.org/
+* <http://www.graphicsmagick.org/>
 
 LICENSE
 -------
