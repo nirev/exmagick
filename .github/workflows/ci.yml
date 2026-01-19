@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  test:
+    name: Test (Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }})
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # We focus on the version you are currently using
+        elixir: ['1.15.8']
+        otp: ['25.3']
+
+    env:
+      # In Travis you toggled this. For modern OTP, 'auto' is usually best.
+      exm_dirty_sched: auto
+      MIX_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Translate Travis 'addons' to apt-get
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libtool-bin build-essential autoconf automake
+          sudo apt-get install -y ghostscript libgraphicsmagick1-dev
+
+      - name: Act Workaround # https://github.com/nektos/act/issues/973
+        if: ${{ env.ACT }}
+        run: curl -fsSL https://deb.nodesource.com/setup_22.x | bash && apt install -y nodejs
+
+      # 2. Setup Elixir & OTP
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+          # 'strict' ensures we get the exact version match
+          version-type: strict
+
+      # 3. Cache dependencies and build artifacts to speed up future runs
+      - name: Restore Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-${{ matrix.otp }}-${{ matrix.elixir }}-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Compile
+        run: mix compile --warnings-as-errors
+
+      - name: Run Tests
+        run: mix test
