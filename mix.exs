@@ -29,7 +29,7 @@ defmodule ExMagick.Mixfile do
     [
       app: :exmagick,
       version: "1.1.0",
-      elixir: "~> 1.3",
+      elixir: "~> 1.15",
       description: description(),
       package: package(),
       deps: deps(),

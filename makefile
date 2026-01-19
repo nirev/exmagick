@@ -1,4 +1,4 @@
-exm_dirty_sched ?= no
+exm_dirty_sched ?= auto
 
 uname_s         := $(shell sh -c 'uname -s 2>/dev/null || echo undefined')
 
